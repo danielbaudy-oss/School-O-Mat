@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escola Finder BCN</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-light: #dbeafe;
+    --accent: #f59e0b;
+    --accent-light: #fef3c7;
+    --success: #10b981;
+    --success-light: #d1fae5;
+    --danger: #ef4444;
+    --danger-light: #fee2e2;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--gray-50); color: var(--gray-800); line-height: 1.6; min-height: 100vh;
+  }
+  nav {
+    background: white; border-bottom: 1px solid var(--gray-200); padding: 0.75rem 1.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; z-index: 1000; box-shadow: var(--shadow);
+  }
+  .nav-brand { font-size: 1.25rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; }
+  .lang-selector { display: flex; gap: 0.25rem; background: var(--gray-100); padding: 0.25rem; border-radius: var(--radius-sm); }
+  .lang-btn {
+    padding: 0.35rem 0.75rem; border: none; background: transparent; border-radius: 6px;
+    cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--gray-500); transition: all 0.2s;
+  }
+  .lang-btn.active { background: white; color: var(--primary); box-shadow: var(--shadow); }
+  .lang-btn:hover:not(.active) { color: var(--gray-700); }
+  .screen { display: none; animation: fadeIn 0.4s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+  .hero { text-align: center; padding: 3rem 1rem; }
+  .hero-icon { font-size: 4rem; margin-bottom: 1rem; }
+  .hero h1 { font-size: 2rem; font-weight: 800; color: var(--gray-900); margin-bottom: 0.5rem; line-height: 1.2; }
+  .hero p { font-size: 1.1rem; color: var(--gray-500); max-width: 500px; margin: 0 auto 2rem; }
+  .location-card {
+    background: white; border-radius: var(--radius); padding: 2rem; box-shadow: var(--shadow-md);
+    max-width: 550px; margin: 0 auto 1.5rem; text-align: left;
+  }
+  .location-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .location-card .subtitle { font-size: 0.85rem; color: var(--gray-400); margin-bottom: 1rem; }
+  .input-group { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+  .input-group input {
+    flex: 1; padding: 0.75rem 1rem; border: 2px solid var(--gray-200); border-radius: var(--radius-sm);
+    font-size: 1rem; transition: border-color 0.2s; outline: none;
+  }
+  .input-group input:focus { border-color: var(--primary); }
+  .input-group input::placeholder { color: var(--gray-400); }
+  .geocode-status { font-size: 0.85rem; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1rem; display: none; }
+  .geocode-status.success { display: block; background: var(--success-light); color: #065f46; }
+  .geocode-status.error { display: block; background: var(--danger-light); color: #991b1b; }
+  .geocode-status.loading { display: block; background: var(--primary-light); color: var(--primary-dark); }
+  .btn {
+    padding: 0.75rem 1.75rem; border: none; border-radius: var(--radius-sm); font-size: 1rem;
+    font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .btn-secondary { background: var(--gray-100); color: var(--gray-700); border: 1px solid var(--gray-200); }
+  .btn-secondary:hover { background: var(--gray-200); }
+  .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-outline:hover { background: var(--primary-light); }
+  .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
+  .btn-block { width: 100%; justify-content: center; }
+  .skip-link { display: block; text-align: center; color: var(--gray-400); font-size: 0.9rem; margin-top: 1rem; cursor: pointer; text-decoration: underline; }
+  .skip-link:hover { color: var(--gray-600); }
+  #minimap { height: 200px; border-radius: var(--radius-sm); margin-bottom: 1rem; display: none; border: 2px solid var(--gray-200); }
+  .progress-bar-container { background: var(--gray-200); border-radius: 100px; height: 8px; margin-bottom: 2rem; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 100px; transition: width 0.4s ease; }
+  .question-card { background: white; border-radius: var(--radius); padding: 2rem; box-shadow: var(--shadow-md); margin-bottom: 1.5rem; }
+  .question-number { font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .question-card h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--gray-900); }
+  .question-desc { font-size: 0.9rem; color: var(--gray-500); margin-bottom: 1.5rem; }
+  .options-grid { display: grid; gap: 0.75rem; }
+  .option-btn {
+    display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.25rem;
+    border: 2px solid var(--gray-200); border-radius: var(--radius-sm); background: white;
+    cursor: pointer; transition: all 0.2s; text-align: left; font-size: 0.95rem;
+  }
+  .option-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+  .option-btn.selected { border-color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 1px var(--primary); }
+  .option-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .option-label { font-weight: 600; color: var(--gray-800); }
+  .option-sublabel { font-size: 0.8rem; color: var(--gray-500); display: block; font-weight: 400; }
+  .quiz-nav { display: flex; justify-content: space-between; margin-top: 1.5rem; }
+  .results-header { text-align: center; padding: 2rem 0; }
+  .results-header h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.5rem; }
+  #results-map { height: 350px; border-radius: var(--radius); margin-bottom: 2rem; box-shadow: var(--shadow-md); border: 2px solid var(--gray-200); }
+  .school-card {
+    background: white; border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow);
+    margin-bottom: 1rem; display: grid; grid-template-columns: auto 1fr auto; gap: 1.25rem;
+    align-items: start; transition: box-shadow 0.2s, transform 0.2s; border: 1px solid var(--gray-100);
+  }
+  .school-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+  .school-rank { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; flex-shrink: 0; }
+  .rank-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; }
+  .rank-2 { background: linear-gradient(135deg, #94a3b8, #64748b); color: white; }
+  .rank-3 { background: linear-gradient(135deg, #d97706, #b45309); color: white; }
+  .rank-other { background: var(--gray-100); color: var(--gray-500); }
+  .school-info h3 { font-size: 1.1rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.25rem; }
+  .school-address { font-size: 0.85rem; color: var(--gray-500); margin-bottom: 0.75rem; }
+  .school-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
+  .tag { padding: 0.2rem 0.6rem; border-radius: 100px; font-size: 0.75rem; font-weight: 600; }
+  .tag-blue { background: var(--primary-light); color: var(--primary-dark); }
+  .tag-green { background: var(--success-light); color: #065f46; }
+  .tag-red { background: var(--danger-light); color: #991b1b; }
+  .tag-gray { background: var(--gray-100); color: var(--gray-600); }
+  .school-meta { display: flex; gap: 1rem; font-size: 0.85rem; color: var(--gray-500); flex-wrap: wrap; }
+  .school-meta span { display: flex; align-items: center; gap: 0.3rem; }
+  .school-score { text-align: center; flex-shrink: 0; }
+  .score-circle { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 800; margin-bottom: 0.25rem; }
+  .score-high { background: var(--success-light); color: #065f46; }
+  .score-med { background: var(--accent-light); color: #92400e; }
+  .score-low { background: var(--gray-100); color: var(--gray-500); }
+  .score-label { font-size: 0.7rem; color: var(--gray-400); font-weight: 600; text-transform: uppercase; }
+  .pedagogy-bar { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem; }
+  .pedagogy-bar-track { flex: 1; height: 6px; background: var(--gray-200); border-radius: 100px; max-width: 120px; }
+  .pedagogy-bar-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--primary), var(--success)); }
+  .pedagogy-label { color: var(--gray-500); font-size: 0.75rem; white-space: nowrap; }
+  .proximity-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.7rem; border-radius: 100px; font-size: 0.8rem; font-weight: 700; }
+  .prox-30 { background: #d1fae5; color: #065f46; }
+  .prox-20 { background: #fef3c7; color: #92400e; }
+  .prox-15 { background: #fed7aa; color: #9a3412; }
+  .prox-0 { background: var(--gray-100); color: var(--gray-500); }
+  .school-details { display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--gray-100); font-size: 0.9rem; color: var(--gray-600); line-height: 1.7; }
+  .school-details.open { display: block; }
+  .details-toggle { background: none; border: none; color: var(--primary); font-size: 0.85rem; font-weight: 600; cursor: pointer; padding: 0; margin-top: 0.5rem; }
+  .details-toggle:hover { text-decoration: underline; }
+  .loading-overlay { text-align: center; padding: 3rem; }
+  .loading-overlay .spinner { display: inline-block; width: 40px; height: 40px; border: 4px solid var(--gray-200); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-overlay p { margin-top: 1rem; color: var(--gray-500); }
+  .data-source-badge { text-align: center; margin-top: 0.5rem; font-size: 0.75rem; color: var(--gray-400); }
+  .data-source-badge .live { color: var(--success); font-weight: 600; }
+  .data-source-badge .offline { color: var(--accent); font-weight: 600; }
+  footer { text-align: center; padding: 2rem 1rem; color: var(--gray-400); font-size: 0.8rem; border-top: 1px solid var(--gray-100); margin-top: 3rem; }
+  footer a { color: var(--primary); }
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 1.5rem; }
+    .container { padding: 1rem; }
+    .school-card { grid-template-columns: 1fr; }
+    .school-rank { width: 36px; height: 36px; font-size: 1rem; }
+    .input-group { flex-direction: column; }
+    .question-card { padding: 1.25rem; }
+    nav { padding: 0.5rem 1rem; }
+    .nav-brand { font-size: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand"><span>🏫</span><span>Escola Finder BCN</span></div>
+  <div class="lang-selector">
+    <button class="lang-btn active" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('es')">ES</button>
+    <button class="lang-btn" onclick="setLang('ca')">CA</button>
+  </div>
+</nav>
+
+<div id="screen-loading" class="screen active">
+  <div class="container">
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p id="loading-text">Loading school data...</p>
+    </div>
+  </div>
+</div>
+
+<div id="screen-welcome" class="screen">
+  <div class="container">
+    <div class="hero">
+      <div class="hero-icon">🎓</div>
+      <h1 data-i18n="welcome_title">Find the Best School for Your Child</h1>
+      <p data-i18n="welcome_subtitle">Answer a few questions and discover which public schools (P3–6th grade) in Poblenou match your family best.</p>
+    </div>
+    <div class="location-card">
+      <h3 data-i18n="location_title">📍 Your Location</h3>
+      <p class="subtitle" data-i18n="location_subtitle">Enter your address to see nearby schools and estimate proximity points for the lottery.</p>
+      <div class="input-group">
+        <input type="text" id="address-input" data-i18n-placeholder="address_placeholder" placeholder="e.g. Pujades 181, Barcelona">
+        <button class="btn btn-primary btn-sm" onclick="geocodeAddress()"><span data-i18n="search_btn">Search</span></button>
+      </div>
+      <div id="geocode-status" class="geocode-status"></div>
+      <div id="minimap"></div>
+      <div id="data-source" class="data-source-badge"></div>
+      <button class="btn btn-primary btn-block" onclick="goToQuiz()" data-i18n="start_quiz">Start School Finder →</button>
+      <div class="skip-link" onclick="skipLocation()" data-i18n="skip_location">Skip location — show all schools</div>
+    </div>
+  </div>
+</div>
+
+<div id="screen-quiz" class="screen">
+  <div class="container">
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+    </div>
+    <div id="question-container"></div>
+    <div class="quiz-nav">
+      <button class="btn btn-secondary" onclick="prevQuestion()" id="prev-btn">← Back</button>
+      <button class="btn btn-primary" onclick="nextQuestion()" id="next-btn">Next →</button>
+    </div>
+  </div>
+</div>
+
+<div id="screen-results" class="screen">
+  <div class="container">
+    <div class="results-header">
+      <h1 data-i18n="results_title">🎉 Your School Matches</h1>
+      <p data-i18n="results_subtitle">Based on your preferences — proximity points always prioritized.</p>
+    </div>
+    <div id="results-map"></div>
+    <div id="results-list"></div>
+    <div style="text-align:center; margin-top:2rem;">
+      <button class="btn btn-outline" onclick="restart()" data-i18n="restart_btn">🔄 Start Over</button>
+    </div>
+    <footer>
+      <p>Informational only. Check official zones at <a href="https://mapa.escoles.gencat.cat" target="_blank">mapa.escoles.gencat.cat</a></p>
+      <p style="margin-top:0.5rem;">Made with ❤️ for Poblenou parents</p>
+    </footer>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ══════════════════════════════════════════════════════
+// ██ CONFIG — Change this URL to your published Google Sheet CSV
+// ══════════════════════════════════════════════════════
+var SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSEh6GlHl6oFvhtY6HTn5pr0Tzfr_M-DjEX2WhRlRR1V0W5Ry4_FzZg2PJ9Nk4s6c1DVvtMy8bpIFw_/pub?gid=0&single=true&output=csv';
+var SHEET_RAW_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSEh6GlHl6oFvhtY6HTn5pr0Tzfr_M-DjEX2WhRlRR1V0W5Ry4_FzZg2PJ9Nk4s6c1DVvtMy8bpIFw_/pub?gid=0&single=true&output=csv';
+
+// Use proxy for local file:// testing, direct URL for hosted
+var SHEET_CSV_URL = window.location.protocol === 'file:' 
+  ? 'https://corsproxy.io/?' + encodeURIComponent(SHEET_RAW_URL)
+  : SHEET_RAW_URL;
+// ══════════════════════════════════════════════════════
+// ██ FALLBACK DATA — Used if Google Sheet is unavailable
+// ══════════════════════════════════════════════════════
+var FALLBACK_SCHOOLS = [
+  { id:"bogatell", name:"Escola Bogatell", address:"C/ Ramon Turró, 74-76, 08005", lat:41.39476, lng:2.19432, pedagogy:3, size:"medium", outdoor:3, arts:2, website:"https://agora.xtec.cat/ceipbogatell/", notes_en:"Central Poblenou on Ramon Turró. Standard public school near Bogatell beach.", notes_es:"Ubicación céntrica en Poblenou en Ramon Turró. Cerca de la playa de Bogatell.", notes_ca:"Ubicació cèntrica al Poblenou a Ramon Turró. A prop de la platja de Bogatell." },
+  { id:"llacuna", name:"Escola La Llacuna del Poblenou", address:"C/ de la Llacuna, 98, 08018", lat:41.39780, lng:2.19310, pedagogy:3, size:"medium", outdoor:3, arts:2, website:"https://agora.xtec.cat/ceipllacunadelpoblenou/", notes_en:"Near Llacuna metro. Mixed community. Standard Catalan curriculum.", notes_es:"Cerca del metro Llacuna. Comunidad mixta. Currículum catalán estándar.", notes_ca:"A prop del metro Llacuna. Comunitat mixta. Currículum català estàndard." },
+  { id:"pereiv", name:"Escola Pere IV", address:"C/ de Pere IV, 198, 08005", lat:41.40120, lng:2.19680, pedagogy:3, size:"medium", outdoor:3, arts:2, website:"https://agora.xtec.cat/ceippereiv/", notes_en:"Heart of Poblenou near Rambla. In the 22@ district. Diverse student body.", notes_es:"Corazón del Poblenou cerca de la Rambla. Distrito 22@. Alumnado diverso.", notes_ca:"Cor del Poblenou prop de la Rambla. Districte 22@. Alumnat divers." },
+  { id:"arenal", name:"Escola L'Arenal de Llevant", address:"C/ del Taulat, 3, 08005", lat:41.39280, lng:2.19080, pedagogy:3.5, size:"medium", outdoor:4, arts:3, website:"https://agora.xtec.cat/escolaarenaldellevant/", notes_en:"Near seafront on Taulat. Good outdoor space. Community-oriented.", notes_es:"Cerca del mar en Taulat. Buen espacio exterior. Comunitaria.", notes_ca:"Prop del mar al Taulat. Bon espai exterior. Comunitària." },
+  { id:"poblenou", name:"Escola Poblenou", address:"C/ del Perú, 139, 08018", lat:41.40430, lng:2.19740, pedagogy:3.5, size:"medium", outdoor:3, arts:3, website:"https://agora.xtec.cat/escolapoblenou/", notes_en:"Well-established in upper Poblenou. Active AMPA. Good reputation.", notes_es:"Bien establecida en Poblenou alto. AMPA activa. Buena reputación.", notes_ca:"Ben establerta al Poblenou alt. AMPA activa. Bona reputació." },
+  { id:"vilao", name:"Escola Vila Olímpica", address:"C/ de Joan Miró, 41, 08005", lat:41.38750, lng:2.19250, pedagogy:3, size:"medium", outdoor:3, arts:2, website:"https://agora.xtec.cat/escolavilaolimpica/", notes_en:"Vila Olímpica neighbourhood. High demand. Well-maintained.", notes_es:"Barrio Vila Olímpica. Alta demanda. Bien mantenida.", notes_ca:"Barri Vila Olímpica. Alta demanda. Ben mantinguda." },
+  { id:"marbella", name:"Escola La Mar Bella", address:"C/ de Bac de Roda, 43, 08019", lat:41.40480, lng:2.20420, pedagogy:2.5, size:"medium", outdoor:3, arts:2, website:"https://agora.xtec.cat/ceiplamarbella/", notes_en:"On Bac de Roda. Community-rooted. Solid reputation. Diverse.", notes_es:"En Bac de Roda. Arraigada. Sólida reputación. Diversa.", notes_ca:"A Bac de Roda. Arrelada. Sòlida reputació. Diversa." },
+  { id:"auditori", name:"Escola Auditori", address:"C/ de Bilbao, 206, 08018", lat:41.40340, lng:2.18870, pedagogy:4, size:"medium", outdoor:3, arts:4, website:"https://agora.xtec.cat/escolaauditori/", notes_en:"Near L'Auditori/Glòries. Arts integration, music, visual arts. Creative approach.", notes_es:"Cerca de L'Auditori/Glòries. Integración artística, música, artes visuales.", notes_ca:"Prop de L'Auditori/Glòries. Integració artística, música, arts visuals." },
+  { id:"fluvia", name:"Escola Fluvià", address:"C/ de Fluvià, 30-36, 08019", lat:41.40580, lng:2.20120, pedagogy:3.5, size:"small", outdoor:3, arts:2, website:"https://agora.xtec.cat/ceipfluvia/", notes_en:"Smaller school on Fluvià. Collaborative. Good teacher-student ratio.", notes_es:"Escuela pequeña en Fluvià. Colaborativa. Buena ratio.", notes_ca:"Escola petita a Fluvià. Col·laborativa. Bona ràtio." },
+  { id:"acacies", name:"Escola Les Acàcies", address:"C/ de l'Agricultura, 34, 08019", lat:41.40920, lng:2.19680, pedagogy:3, size:"medium", outdoor:3, arts:2, website:"https://agora.xtec.cat/ceiplesacacies/", notes_en:"Northern Sant Martí. Standard school. Active parent community.", notes_es:"Norte de Sant Martí. Escuela estándar. Padres activos.", notes_ca:"Nord de Sant Martí. Escola estàndard. Pares actius." },
+  { id:"montseny", name:"CE Montseny", address:"C/ de Huelva, 34, 08020", lat:41.41380, lng:2.18920, pedagogy:3, size:"medium", outdoor:3, arts:2, website:"https://agora.xtec.cat/cemontseny/", notes_en:"Upper Sant Martí near Navas metro. Established. Further from Poblenou.", notes_es:"Sant Martí alto cerca de Navas. Establecida. Lejos del Poblenou.", notes_ca:"Sant Martí alt prop de Navas. Establerta. Lluny del Poblenou." },
+  { id:"santmarti", name:"Escola Sant Martí", address:"C/ del Pont del Treball, 11, 08020", lat:41.41200, lng:2.19480, pedagogy:4, size:"medium", outdoor:4, arts:3, website:"https://agora.xtec.cat/ceipsantmarti/", notes_en:"Remix the School / Fab Lab Barcelona — STEAM, maker education. Innovative. Sustainable building.", notes_es:"Remix the School / Fab Lab Barcelona — STEAM, educación maker. Innovadora. Edificio sostenible.", notes_ca:"Remix the School / Fab Lab Barcelona — STEAM, educació maker. Innovadora. Edifici sostenible." },
+  { id:"trebol", name:"Escola Trébol", address:"C/ del Maresme, 198, 08020", lat:41.41280, lng:2.20280, pedagogy:3, size:"small", outdoor:3, arts:2, website:"https://agora.xtec.cat/ceiptrebol/", notes_en:"Smaller school on Maresme. Standard curriculum. Intimate community.", notes_es:"Escuela pequeña en Maresme. Currículum estándar. Comunidad íntima.", notes_ca:"Escola petita a Maresme. Currículum estàndard. Comunitat íntima." },
+  { id:"gaia", name:"Escola Gaia", address:"C/ Dos de Maig, 189 (Parc de la Canòpia)", lat:41.40150, lng:2.17480, pedagogy:5, size:"medium", outdoor:5, arts:4, website:"", notes_en:"⚠️ UNDER CONSTRUCTION. Parc de la Canòpia. €11.5M. Expected most innovative.", notes_es:"⚠️ EN CONSTRUCCIÓN. Parc de la Canòpia. 11,5M€. Se espera muy innovadora.", notes_ca:"⚠️ EN CONSTRUCCIÓ. Parc de la Canòpia. 11,5M€. S'espera molt innovadora." }
+];
+
+// ══════════════════════════════════════════════════════
+// ██ SCHOOL DATA — loaded from sheet or fallback
+// ══════════════════════════════════════════════════════
+var schools = [];
+var dataSource = 'none'; // 'sheet' or 'fallback'
+
+function parseCSV(text) {
+  var lines = [];
+  var current = '';
+  var inQuotes = false;
+  // Handle quoted fields with commas and newlines
+  for (var i = 0; i < text.length; i++) {
+    var ch = text[i];
+    if (ch === '"') {
+      if (inQuotes && text[i+1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+      if (current.length > 0) {
+        lines.push(current);
+        current = '';
+      }
+      if (ch === '\r' && text[i+1] === '\n') i++;
+    } else {
+      current += ch;
+    }
+  }
+  if (current.length > 0) lines.push(current);
+
+  if (lines.length < 2) return [];
+
+  // Parse header
+  var headers = splitCSVLine(lines[0]);
+  var result = [];
+
+  for (var r = 1; r < lines.length; r++) {
+    var values = splitCSVLine(lines[r]);
+    if (values.length < headers.length) continue;
+    var obj = {};
+    for (var c = 0; c < headers.length; c++) {
+      var key = headers[c].trim().toLowerCase();
+      var val = values[c] ? values[c].trim() : '';
+      obj[key] = val;
+    }
+    // Skip empty rows
+    if (!obj.id || !obj.name) continue;
+    result.push({
+      id: obj.id,
+      name: obj.name,
+      address: obj.address || '',
+      lat: parseFloat(obj.lat) || 0,
+      lng: parseFloat(obj.lng) || 0,
+      pedagogy: parseFloat(obj.pedagogy) || 3,
+      size: obj.size || 'medium',
+      outdoor: parseFloat(obj.outdoor) || 3,
+      arts: parseFloat(obj.arts) || 2,
+      website: obj.website || '',
+      notes_en: obj.notes_en || '',
+      notes_es: obj.notes_es || '',
+      notes_ca: obj.notes_ca || ''
+    });
+  }
+  return result;
+}
+
+function splitCSVLine(line) {
+  var result = [];
+  var current = '';
+  var inQuotes = false;
+  for (var i = 0; i < line.length; i++) {
+    var ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i+1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+async function loadSchoolData() {
+  var loadingText = document.getElementById('loading-text');
+
+  if (SHEET_CSV_URL && SHEET_CSV_URL !== 'YOUR_PUBLISHED_CSV_URL_HERE') {
+    try {
+      loadingText.textContent = 'Loading from Google Sheets...';
+      console.log('🔄 Fetching:', SHEET_CSV_URL);
+      
+      var resp = await fetch(SHEET_CSV_URL);
+      console.log('📡 Response status:', resp.status, resp.statusText);
+      
+      if (resp.ok) {
+        var text = await resp.text();
+        console.log('📄 Raw CSV (first 500 chars):', text.substring(0, 500));
+        console.log('📄 Total length:', text.length);
+        
+        // Remove BOM if present
+        if (text.charCodeAt(0) === 0xFEFF) {
+          text = text.substring(1);
+          console.log('✂️ Removed BOM');
+        }
+        
+        var parsed = parseCSV(text);
+        console.log('🔢 Parsed schools:', parsed.length);
+        if (parsed.length > 0) {
+          console.log('✅ First school:', JSON.stringify(parsed[0]));
+          schools = parsed;
+          dataSource = 'sheet';
+          finishLoading();
+          return;
+        } else {
+          console.warn('⚠️ CSV parsed but 0 schools found. Check column headers.');
+        }
+      } else {
+        console.warn('⚠️ Response not OK:', resp.status);
+      }
+    } catch (e) {
+      console.error('❌ Fetch error:', e.message);
+    }
+  } else {
+    console.log('⏭️ No Sheet URL configured, using fallback');
+  }
+
+  loadingText.textContent = 'Using local data...';
+  schools = FALLBACK_SCHOOLS;
+  dataSource = 'fallback';
+  console.log('📦 Using fallback:', schools.length, 'schools');
+  finishLoading();
+}
+
+function finishLoading() {
+  showScreen('screen-welcome');
+  var badge = document.getElementById('data-source');
+  if (dataSource === 'sheet') {
+    badge.innerHTML = '📊 Data: <span class="live">Live from Google Sheets</span> (' + schools.length + ' schools)';
+  } else {
+    badge.innerHTML = '📦 Data: <span class="offline">Built-in</span> (' + schools.length + ' schools) — <a href="#" style="color:var(--primary)" onclick="alert(\'To use live data:\\n1. Create a Google Sheet\\n2. Publish as CSV\\n3. Set SHEET_CSV_URL in the code\')">Connect Google Sheet</a>';
+  }
+}
+
+
+// ══════════════════════════════════════════════════════
+// ██ I18N
+// ══════════════════════════════════════════════════════
+var i18n = {
+  en: {
+    welcome_title: "Find the Best School for Your Child",
+    welcome_subtitle: "Answer a few questions and discover which public schools (P3–6th grade) in Poblenou match your family best.",
+    location_title: "📍 Your Location",
+    location_subtitle: "Enter your address to see nearby schools and estimate proximity points for the lottery.",
+    address_placeholder: "e.g. Pujades 181, Barcelona",
+    search_btn: "Search", start_quiz: "Start School Finder →", skip_location: "Skip location — show all schools",
+    geocode_success: "✅ Address found! We'll calculate distances.", geocode_error: "❌ Not found. Try adding 'Barcelona'.", geocode_loading: "🔍 Searching...",
+    prev_btn: "← Back", next_btn: "Next →", see_results: "See Results 🎉",
+    results_title: "🎉 Your School Matches", results_subtitle: "Based on your preferences — proximity points always prioritized.",
+    restart_btn: "🔄 Start Over", match: "match", walk: "walk",
+    traditional: "Traditional", progressive: "Progressive",
+    details_show: "Show details ▾", details_hide: "Hide details ▴",
+    no_location: "Add your address for distance info",
+    likely_30: "~30 pts (likely in zone)", likely_20: "~20 pts (extended zone)", likely_15: "~15 pts (same district)", likely_0: "0 pts (outside district)",
+    q1_title: "What teaching approach do you prefer?", q1_desc: "From structured/traditional to project-based/innovative.",
+    q1_o1: "Traditional / Structured", q1_o1_sub: "Clear routines, teacher-led, textbook-based",
+    q1_o2: "Balanced / Moderate", q1_o2_sub: "Mix of structured and creative",
+    q1_o3: "Progressive / Innovative", q1_o3_sub: "Project-based, play-based, child-led",
+    q1_o4: "Very progressive / Alternative", q1_o4_sub: "Maker education, STEAM, experimental",
+    q2_title: "How important is being close to home?", q2_desc: "Closer = easier logistics + more lottery points.",
+    q2_o1: "Essential — within 10 min walk only", q2_o2: "Important — up to 20 min walk", q2_o3: "Less important — I'll travel further",
+    q3_title: "What size school do you prefer?", q3_desc: "Smaller = more personal; larger = more resources.",
+    q3_o1: "Small & personal", q3_o1_sub: "1 class per grade", q3_o2: "Medium", q3_o2_sub: "2 classes per grade", q3_o3: "No preference", q3_o3_sub: "",
+    q4_title: "How important is outdoor space?", q4_desc: "Some have large patios; others are compact urban schools.",
+    q4_o1: "Very important", q4_o2: "Nice to have", q4_o3: "Not important",
+    q5_title: "Do you value arts & culture integration?", q5_desc: "Some schools have music, visual arts, or cultural programs.",
+    q5_o1: "Yes, very much!", q5_o1_sub: "Arts learning is a priority", q5_o2: "Nice to have", q5_o2_sub: "Would be a plus", q5_o3: "Not a factor", q5_o3_sub: "",
+  },
+  es: {
+    welcome_title: "Encuentra la Mejor Escuela para tu Hijo/a",
+    welcome_subtitle: "Responde unas preguntas y descubre qué escuelas públicas (P3–6º) del Poblenou encajan mejor.",
+    location_title: "📍 Tu Ubicación", location_subtitle: "Introduce tu dirección para ver escuelas cercanas y estimar puntos de proximidad.",
+    address_placeholder: "ej. Pujades 181, Barcelona",
+    search_btn: "Buscar", start_quiz: "Empezar →", skip_location: "Saltar ubicación — mostrar todas",
+    geocode_success: "✅ ¡Dirección encontrada!", geocode_error: "❌ No encontrada. Prueba con 'Barcelona'.", geocode_loading: "🔍 Buscando...",
+    prev_btn: "← Atrás", next_btn: "Siguiente →", see_results: "Ver Resultados 🎉",
+    results_title: "🎉 Tus Escuelas Recomendadas", results_subtitle: "Según tus preferencias — puntos de proximidad siempre priorizados.",
+    restart_btn: "🔄 Empezar de Nuevo", match: "compatibilidad", walk: "a pie",
+    traditional: "Tradicional", progressive: "Progresista",
+    details_show: "Ver detalles ▾", details_hide: "Ocultar ▴",
+    no_location: "Añade tu dirección para distancias",
+    likely_30: "~30 pts (en zona)", likely_20: "~20 pts (zona ampliada)", likely_15: "~15 pts (mismo distrito)", likely_0: "0 pts (fuera)",
+    q1_title: "¿Qué enfoque pedagógico prefieres?", q1_desc: "Desde tradicional hasta innovador.",
+    q1_o1: "Tradicional / Estructurado", q1_o1_sub: "Rutinas claras, profesor guía, libros",
+    q1_o2: "Equilibrado / Moderado", q1_o2_sub: "Mezcla de estructurado y creativo",
+    q1_o3: "Progresista / Innovador", q1_o3_sub: "Por proyectos, basado en juego",
+    q1_o4: "Muy progresista / Alternativo", q1_o4_sub: "Maker, STEAM, experimental",
+    q2_title: "¿Importa estar cerca de casa?", q2_desc: "Más cerca = más fácil + más puntos en el sorteo.",
+    q2_o1: "Esencial — menos de 10 min", q2_o2: "Importante — hasta 20 min", q2_o3: "Menos importante",
+    q3_title: "¿Tamaño de escuela?", q3_desc: "Más pequeña = más personal; más grande = más recursos.",
+    q3_o1: "Pequeña y personal", q3_o1_sub: "1 clase por curso", q3_o2: "Mediana", q3_o2_sub: "2 clases por curso", q3_o3: "Sin preferencia", q3_o3_sub: "",
+    q4_title: "¿Espacio exterior?", q4_desc: "Algunas tienen grandes patios; otras son compactas.",
+    q4_o1: "Muy importante", q4_o2: "Estaría bien", q4_o3: "No importante",
+    q5_title: "¿Artes y cultura?", q5_desc: "Algunas tienen programas de música, artes visuales o culturales.",
+    q5_o1: "¡Sí, mucho!", q5_o1_sub: "Artes es prioritario", q5_o2: "Estaría bien", q5_o2_sub: "Sería un plus", q5_o3: "No es factor", q5_o3_sub: "",
+  },
+  ca: {
+    welcome_title: "Troba la Millor Escola per al teu Fill/a",
+    welcome_subtitle: "Respon unes preguntes i descobreix quines escoles públiques (P3–6è) del Poblenou encaixen millor.",
+    location_title: "📍 La Teva Ubicació", location_subtitle: "Introdueix la teva adreça per veure escoles properes i estimar punts de proximitat.",
+    address_placeholder: "p.ex. Pujades 181, Barcelona",
+    search_btn: "Cercar", start_quiz: "Començar →", skip_location: "Saltar ubicació — mostrar totes",
+    geocode_success: "✅ Adreça trobada!", geocode_error: "❌ No trobada. Prova amb 'Barcelona'.", geocode_loading: "🔍 Cercant...",
+    prev_btn: "← Enrere", next_btn: "Següent →", see_results: "Veure Resultats 🎉",
+    results_title: "🎉 Les Teves Escoles Recomanades", results_subtitle: "Segons les teves preferències — punts de proximitat sempre prioritzats.",
+    restart_btn: "🔄 Tornar a Començar", match: "compatibilitat", walk: "a peu",
+    traditional: "Tradicional", progressive: "Progressista",
+    details_show: "Veure detalls ▾", details_hide: "Amagar ▴",
+    no_location: "Afegeix adreça per distàncies",
+    likely_30: "~30 pts (a la zona)", likely_20: "~20 pts (zona ampliada)", likely_15: "~15 pts (mateix districte)", likely_0: "0 pts (fora)",
+    q1_title: "Quin enfocament pedagògic prefereixes?", q1_desc: "Des de tradicional fins a innovador.",
+    q1_o1: "Tradicional / Estructurat", q1_o1_sub: "Rutines clares, professor guia, llibres",
+    q1_o2: "Equilibrat / Moderat", q1_o2_sub: "Mescla d'estructurat i creatiu",
+    q1_o3: "Progressista / Innovador", q1_o3_sub: "Per projectes, basat en joc",
+    q1_o4: "Molt progressista / Alternatiu", q1_o4_sub: "Maker, STEAM, experimental",
+    q2_title: "Importa estar a prop de casa?", q2_desc: "Més a prop = més fàcil + més punts al sorteig.",
+    q2_o1: "Essencial — menys de 10 min", q2_o2: "Important — fins a 20 min", q2_o3: "Menys important",
+    q3_title: "Mida d'escola?", q3_desc: "Més petita = més personal; més gran = més recursos.",
+    q3_o1: "Petita i personal", q3_o1_sub: "1 classe per curs", q3_o2: "Mitjana", q3_o2_sub: "2 classes per curs", q3_o3: "Sense preferència", q3_o3_sub: "",
+    q4_title: "Espai exterior?", q4_desc: "Algunes tenen grans patis; d'altres són compactes.",
+    q4_o1: "Molt important", q4_o2: "Estaria bé", q4_o3: "No important",
+    q5_title: "Arts i cultura?", q5_desc: "Algunes tenen programes de música, arts visuals o culturals.",
+    q5_o1: "Sí, molt!", q5_o1_sub: "Arts és prioritari", q5_o2: "Estaria bé", q5_o2_sub: "Seria un plus", q5_o3: "No és factor", q5_o3_sub: "",
+  }
+};
+
+var currentLang = 'en';
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelector('.lang-btn[onclick="setLang(\'' + lang + '\')"]').classList.add('active');
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    if (i18n[lang][key]) el.textContent = i18n[lang][key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-placeholder');
+    if (i18n[lang][key]) el.placeholder = i18n[lang][key];
+  });
+  if (document.getElementById('screen-quiz').classList.contains('active')) renderQuestion();
+  if (document.getElementById('screen-results').classList.contains('active')) renderResults();
+}
+function t(key) { return i18n[currentLang][key] || i18n['en'][key] || key; }
+
+
+// ══════════════════════════════════════════════════════
+// ██ GEO
+// ══════════════════════════════════════════════════════
+var userLat = null, userLng = null, miniMap = null, miniMarker = null;
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+  var R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLng = (lng2-lng1)*Math.PI/180;
+  var a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function estimateWalkMinutes(km) { return Math.round(km / 0.075); }
+function estimateProximityPoints(km) {
+  if (km <= 0.75) return 30; if (km <= 1.5) return 20; if (km <= 3.0) return 15; return 0;
+}
+function getProximityLabel(pts) {
+  if (pts===30) return t('likely_30'); if (pts===20) return t('likely_20'); if (pts===15) return t('likely_15'); return t('likely_0');
+}
+function getProximityClass(pts) {
+  if (pts===30) return 'prox-30'; if (pts===20) return 'prox-20'; if (pts===15) return 'prox-15'; return 'prox-0';
+}
+
+async function geocodeAddress() {
+  var input = document.getElementById('address-input').value.trim();
+  if (!input) return;
+  var status = document.getElementById('geocode-status');
+  status.className = 'geocode-status loading'; status.textContent = t('geocode_loading');
+  try {
+    var query = input.includes('Barcelona') ? input : input + ', Barcelona, Spain';
+    var resp = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=1&countrycodes=es');
+    var data = await resp.json();
+    if (data.length > 0) {
+      userLat = parseFloat(data[0].lat); userLng = parseFloat(data[0].lon);
+      status.className = 'geocode-status success'; status.textContent = t('geocode_success');
+      var mapDiv = document.getElementById('minimap'); mapDiv.style.display = 'block';
+      if (!miniMap) {
+        miniMap = L.map('minimap').setView([userLat, userLng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' }).addTo(miniMap);
+      } else { miniMap.setView([userLat, userLng], 15); }
+      if (miniMarker) miniMap.removeLayer(miniMarker);
+      miniMarker = L.marker([userLat, userLng]).addTo(miniMap);
+      schools.forEach(function(s) {
+        var dist = haversineKm(userLat, userLng, s.lat, s.lng);
+        if (dist < 3) L.circleMarker([s.lat, s.lng], { radius:6, fillColor:'#2563eb', color:'#fff', weight:2, fillOpacity:0.8 }).bindPopup('<b>'+s.name+'</b><br>'+Math.round(dist*1000)+'m').addTo(miniMap);
+      });
+      var bounds = L.latLngBounds([[userLat, userLng]]);
+      schools.forEach(function(s) { if (haversineKm(userLat, userLng, s.lat, s.lng) < 2.5) bounds.extend([s.lat, s.lng]); });
+      miniMap.fitBounds(bounds.pad(0.1));
+    } else { status.className = 'geocode-status error'; status.textContent = t('geocode_error'); }
+  } catch (e) { status.className = 'geocode-status error'; status.textContent = t('geocode_error'); }
+}
+function skipLocation() { userLat = null; userLng = null; goToQuiz(); }
+
+
+// ══════════════════════════════════════════════════════
+// ██ QUIZ — 5 questions
+// ══════════════════════════════════════════════════════
+var currentQuestion = 0, answers = {};
+var questions = [
+  { id:'pedagogy_pref', titleKey:'q1_title', descKey:'q1_desc', options:[
+    { value:1, labelKey:'q1_o1', subKey:'q1_o1_sub', icon:'📚' },
+    { value:2, labelKey:'q1_o2', subKey:'q1_o2_sub', icon:'⚖️' },
+    { value:3, labelKey:'q1_o3', subKey:'q1_o3_sub', icon:'🌱' },
+    { value:4, labelKey:'q1_o4', subKey:'q1_o4_sub', icon:'🚀' }
+  ]},
+  { id:'distance_pref', titleKey:'q2_title', descKey:'q2_desc', options:[
+    { value:'close', labelKey:'q2_o1', icon:'🏠' },
+    { value:'medium', labelKey:'q2_o2', icon:'🚶' },
+    { value:'far', labelKey:'q2_o3', icon:'🚌' }
+  ]},
+  { id:'size_pref', titleKey:'q3_title', descKey:'q3_desc', options:[
+    { value:'small', labelKey:'q3_o1', subKey:'q3_o1_sub', icon:'👨‍👩‍👧' },
+    { value:'medium', labelKey:'q3_o2', subKey:'q3_o2_sub', icon:'🏫' },
+    { value:'any', labelKey:'q3_o3', subKey:'q3_o3_sub', icon:'🤷' }
+  ]},
+  { id:'outdoor_pref', titleKey:'q4_title', descKey:'q4_desc', options:[
+    { value:'high', labelKey:'q4_o1', icon:'🌳' },
+    { value:'medium', labelKey:'q4_o2', icon:'🌤️' },
+    { value:'low', labelKey:'q4_o3', icon:'🏢' }
+  ]},
+  { id:'arts_pref', titleKey:'q5_title', descKey:'q5_desc', options:[
+    { value:'high', labelKey:'q5_o1', subKey:'q5_o1_sub', icon:'🎨' },
+    { value:'medium', labelKey:'q5_o2', subKey:'q5_o2_sub', icon:'🖼️' },
+    { value:'low', labelKey:'q5_o3', subKey:'q5_o3_sub', icon:'📐' }
+  ]}
+];
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function goToQuiz() { showScreen('screen-quiz'); currentQuestion = 0; renderQuestion(); }
+
+function renderQuestion() {
+  var q = questions[currentQuestion];
+  document.getElementById('progress-fill').style.width = ((currentQuestion)/questions.length*100) + '%';
+  document.getElementById('prev-btn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+  var nb = document.getElementById('next-btn');
+  nb.textContent = currentQuestion === questions.length - 1 ? t('see_results') : t('next_btn');
+
+  var html = '<div class="question-card"><div class="question-number">Question ' + (currentQuestion+1) + ' / ' + questions.length + '</div>';
+  html += '<h2>' + t(q.titleKey) + '</h2><p class="question-desc">' + t(q.descKey) + '</p><div class="options-grid">';
+  q.options.forEach(function(opt) {
+    var sel = answers[q.id] === opt.value ? 'selected' : '';
+    var sub = opt.subKey ? '<span class="option-sublabel">' + t(opt.subKey) + '</span>' : '';
+    var val = typeof opt.value === 'string' ? "'" + opt.value + "'" : opt.value;
+    html += '<div class="option-btn ' + sel + '" onclick="selectOption(\'' + q.id + '\',' + val + ')"><span class="option-icon">' + opt.icon + '</span><div><span class="option-label">' + t(opt.labelKey) + '</span>' + sub + '</div></div>';
+  });
+  html += '</div></div>';
+  document.getElementById('question-container').innerHTML = html;
+}
+
+function selectOption(qId, value) {
+  answers[qId] = value; renderQuestion();
+  setTimeout(function() { if (currentQuestion < questions.length - 1) nextQuestion(); }, 300);
+}
+function nextQuestion() {
+  if (answers[questions[currentQuestion].id] === undefined) return;
+    if (currentQuestion < questions.length - 1) { currentQuestion++; renderQuestion(); }
+  else { calculateAndShowResults(); }
+}
+function prevQuestion() { if (currentQuestion > 0) { currentQuestion--; renderQuestion(); } }
+
+
+// ══════════════════════════════════════════════════════
+// ██ SCORING — proximity always maximized
+// ══════════════════════════════════════════════════════
+function scoreSchool(school) {
+  var score = 0, maxScore = 0, breakdown = {};
+  var distKm = null, walkMin = null, proxPts = null;
+
+  if (userLat && userLng) {
+    distKm = haversineKm(userLat, userLng, school.lat, school.lng);
+    walkMin = estimateWalkMinutes(distKm);
+    proxPts = estimateProximityPoints(distKm);
+  }
+
+  // 1. Pedagogy (weight: 30)
+  var w1 = 30; maxScore += w1;
+  var pedMap = { 1:1.5, 2:2.5, 3:4, 4:5 };
+  var prefPed = pedMap[answers.pedagogy_pref] || 3;
+  var pedDiff = Math.abs(school.pedagogy - prefPed);
+  var pedScore = Math.max(0, w1 - (pedDiff * 8));
+  score += pedScore; breakdown.pedagogy = pedScore;
+
+  // 2. Distance + Proximity (weight: 30) — always maximized
+  var w2 = 30; maxScore += w2;
+  if (userLat && userLng) {
+    var ds = 0;
+    if (proxPts === 30) ds += w2 * 0.5;
+    else if (proxPts === 20) ds += w2 * 0.25;
+    else ds += 1;
+    if (answers.distance_pref === 'close') {
+      if (walkMin <= 10) ds += w2 * 0.5;
+      else if (walkMin <= 15) ds += w2 * 0.3;
+      else if (walkMin <= 20) ds += w2 * 0.15;
+      else ds += 1;
+    } else if (answers.distance_pref === 'medium') {
+      if (walkMin <= 20) ds += w2 * 0.5;
+      else if (walkMin <= 30) ds += w2 * 0.25;
+      else ds += 2;
+    } else {
+      ds += w2 * 0.35;
+    }
+    score += Math.min(ds, w2); breakdown.distance = Math.min(ds, w2);
+  } else {
+    score += w2 * 0.5; breakdown.distance = w2 * 0.5;
+  }
+
+  // 3. Size (weight: 12)
+  var w3 = 12; maxScore += w3;
+  if (answers.size_pref === 'any' || answers.size_pref === school.size) {
+    score += w3; breakdown.size = w3;
+  } else {
+    score += w3 * 0.3; breakdown.size = w3 * 0.3;
+  }
+
+  // 4. Outdoor (weight: 14)
+  var w4 = 14; maxScore += w4;
+  var outMap = { 'high':5, 'medium':3, 'low':1 };
+  var outPref = outMap[answers.outdoor_pref] || 3;
+  var outDiff = Math.abs(school.outdoor - outPref);
+  var outScore = Math.max(0, w4 - (outDiff * 4));
+  score += outScore; breakdown.outdoor = outScore;
+
+  // 5. Arts (weight: 14)
+  var w5 = 14; maxScore += w5;
+  var artsMap = { 'high':5, 'medium':3, 'low':1 };
+  var artsPref = artsMap[answers.arts_pref] || 3;
+  var artsDiff = Math.abs(school.arts - artsPref);
+  var artsScore = Math.max(0, w5 - (artsDiff * 4));
+  score += artsScore; breakdown.arts = artsScore;
+
+  return {
+    school: school, score: score, maxScore: maxScore,
+    pct: Math.round((score / maxScore) * 100),
+    distKm: distKm, walkMin: walkMin, proxPts: proxPts, breakdown: breakdown
+  };
+}
+
+
+// ══════════════════════════════════════════════════════
+// ██ RESULTS
+// ══════════════════════════════════════════════════════
+var resultsMap = null, scoredResults = [];
+
+function calculateAndShowResults() {
+  showScreen('screen-results');
+  scoredResults = schools.map(function(s) { return scoreSchool(s); });
+  scoredResults.sort(function(a, b) { return b.pct - a.pct; });
+  renderResults();
+}
+
+function renderResults() {
+  if (scoredResults.length === 0) return;
+
+  // Map
+  if (resultsMap) { resultsMap.remove(); resultsMap = null; }
+  resultsMap = L.map('results-map').setView([41.399, 2.196], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' }).addTo(resultsMap);
+
+  if (userLat && userLng) {
+    L.marker([userLat, userLng], {
+      icon: L.divIcon({
+        html: '<div style="background:#ef4444;color:white;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);">🏠</div>',
+        className: '', iconSize: [30,30], iconAnchor: [15,15]
+      })
+    }).addTo(resultsMap).bindPopup('<b>Your location</b>');
+  }
+
+  var bounds = userLat ? L.latLngBounds([[userLat, userLng]]) : L.latLngBounds();
+  scoredResults.forEach(function(r, i) {
+    var color = i === 0 ? '#f59e0b' : (i < 3 ? '#2563eb' : '#6b7280');
+    L.circleMarker([r.school.lat, r.school.lng], {
+      radius: i < 3 ? 10 : 7, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.9
+    }).addTo(resultsMap).bindPopup('<b>#' + (i+1) + ' ' + r.school.name + '</b><br>' + r.pct + '% ' + t('match') + (r.distKm ? ' (' + Math.round(r.distKm*1000) + 'm)' : ''));
+    bounds.extend([r.school.lat, r.school.lng]);
+  });
+  if (bounds.isValid()) resultsMap.fitBounds(bounds.pad(0.1));
+
+  // Cards
+  var list = document.getElementById('results-list');
+  var html = '';
+  scoredResults.forEach(function(r, i) {
+    var rank = i + 1;
+    var rankClass = rank === 1 ? 'rank-1' : (rank === 2 ? 'rank-2' : (rank === 3 ? 'rank-3' : 'rank-other'));
+    var scoreClass = r.pct >= 75 ? 'score-high' : (r.pct >= 50 ? 'score-med' : 'score-low');
+
+    var tags = '<span class="tag tag-blue">CEIP</span>';
+    if (r.school.id === 'gaia') tags += '<span class="tag tag-red">⚠️ ' + (currentLang==='ca'?'En construcció':currentLang==='es'?'En construcción':'Under construction') + '</span>';
+
+    var distHtml = r.distKm !== null
+      ? '<span>📏 ' + Math.round(r.distKm*1000) + 'm · ~' + r.walkMin + ' min ' + t('walk') + '</span>'
+      : '<span style="color:var(--gray-400)">📍 ' + t('no_location') + '</span>';
+
+    var proxHtml = r.proxPts !== null
+      ? '<span class="proximity-badge ' + getProximityClass(r.proxPts) + '">' + getProximityLabel(r.proxPts) + '</span>'
+      : '';
+
+    var pedPct = (r.school.pedagogy / 5) * 100;
+    var pedBar = '<div class="pedagogy-bar"><span class="pedagogy-label">📚 ' + t('traditional') + '</span><div class="pedagogy-bar-track"><div class="pedagogy-bar-fill" style="width:' + pedPct + '%"></div></div><span class="pedagogy-label">🌱 ' + t('progressive') + '</span></div>';
+
+    var notes = r.school['notes_' + currentLang] || r.school.notes_en;
+    var webLabel = currentLang==='ca'?"Web de l'escola":(currentLang==='es'?'Web de la escuela':'School website');
+    var websiteLink = r.school.website ? '<a href="' + r.school.website + '" target="_blank" style="color:var(--primary);font-size:0.85rem">🔗 ' + webLabel + '</a>' : '';
+
+    html += '<div class="school-card">';
+    html += '<div class="school-rank ' + rankClass + '">' + rank + '</div>';
+    html += '<div class="school-info">';
+    html += '<h3>' + r.school.name + '</h3>';
+    html += '<div class="school-address">' + r.school.address + '</div>';
+    html += '<div class="school-tags">' + tags + ' ' + proxHtml + '</div>';
+    html += '<div class="school-meta">' + distHtml + '</div>';
+    html += pedBar;
+    html += '<button class="details-toggle" onclick="toggleDetails(this)" data-show="' + t('details_show') + '" data-hide="' + t('details_hide') + '">' + t('details_show') + '</button>';
+    html += '<div class="school-details"><p>' + notes + '</p><div style="margin-top:0.5rem">' + websiteLink + '</div></div>';
+    html += '</div>';
+    html += '<div class="school-score"><div class="score-circle ' + scoreClass + '">' + r.pct + '%</div><div class="score-label">' + t('match') + '</div></div>';
+    html += '</div>';
+  });
+  list.innerHTML = html;
+}
+
+function toggleDetails(btn) {
+  var d = btn.nextElementSibling;
+  if (d.classList.contains('open')) { d.classList.remove('open'); btn.textContent = btn.dataset.show; }
+  else { d.classList.add('open'); btn.textContent = btn.dataset.hide; }
+}
+
+function restart() {
+  Object.keys(answers).forEach(function(k) { delete answers[k]; });
+  currentQuestion = 0; scoredResults = [];
+  showScreen('screen-welcome');
+}
+
+// ══════════════════════════════════════════════════════
+// ██ INIT
+// ══════════════════════════════════════════════════════
+document.getElementById('address-input').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') geocodeAddress();
+});
+
+setLang('en');
+loadSchoolData();
+</script>
+</body>
+</html>
