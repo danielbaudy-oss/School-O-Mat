@@ -822,6 +822,16 @@ function renderResults() {
     html += '</div>';
   });
   list.innerHTML = html;
+    // DEBUG — remove later
+  var debug = '<div style="background:#fef3c7;padding:1rem;border-radius:8px;margin-top:1rem;font-size:0.8rem;">';
+  debug += '<b>🐛 Debug Info:</b><br>';
+  debug += 'Schools loaded: ' + schools.length + '<br>';
+  debug += 'Results scored: ' + scoredResults.length + '<br>';
+  scoredResults.forEach(function(r, i) {
+    debug += '#' + (i+1) + ' ' + r.school.name + ' → lat:' + r.school.lat + ' lng:' + r.school.lng + ' score:' + r.pct + '%<br>';
+  });
+  debug += '</div>';
+  list.innerHTML += debug;
 }
 
 function toggleDetails(btn) {
@@ -847,4 +857,5 @@ setLang('en');
 loadSchoolData();
 </script>
 </body>
+
 </html>
