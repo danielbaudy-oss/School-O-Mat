@@ -324,10 +324,6 @@
       <h1 data-i18n="results_title">🎉 Your School Matches</h1>
       <p data-i18n="results_subtitle">Based on your preferences — district proximity always prioritized.</p>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
-      <button class="btn btn-outline btn-sm" onclick="restart()" data-i18n="restart_btn" style="width:auto;">🔄 Start Over</button>
-      <button class="btn btn-secondary btn-sm" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="width:auto;">↑ Top</button>
-    </div>
     <div id="results-map"></div>
     <div id="results-list"></div>
     <div style="text-align:center; margin-top:1.5rem;">
@@ -878,7 +874,7 @@ function renderResults(){
   }
   var list=document.getElementById('results-list');
   var html='';
-  var showCount = window.showAllResults ? scoredResults.length : 3;
+    var showCount = 10;
   scoredResults.forEach(function(r,i){
     if(i >= showCount) return;
     var rank=i+1;
@@ -926,9 +922,7 @@ function renderResults(){
     html+='<div class="school-score"><div class="score-circle '+scoreClass+'">'+r.pct+'%</div><div class="score-label">'+t('match')+'</div></div>';
     html+='</div>';
   });
-    if(!window.showAllResults && scoredResults.length > 3){
-    html+='<div style="text-align:center;margin-top:0.75rem;"><button class="btn btn-secondary" onclick="showMore()" style="width:auto;" data-i18n="show_more">Show all '+scoredResults.length+' schools →</button></div>';
-  }
+
   list.innerHTML=html;
 }
 
