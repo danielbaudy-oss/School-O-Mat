@@ -109,6 +109,13 @@
     justify-content: center; gap: 0.5rem; width: 100%;
     -webkit-appearance: none;
   }
+
+  .btn:disabled {
+    background: var(--gray-200); color: var(--gray-400);
+    cursor: not-allowed; transform: none;
+  }
+  .btn:disabled:hover { background: var(--gray-200); }
+
   .btn-primary { background: var(--primary); color: white; }
   .btn-primary:hover { background: var(--primary-dark); }
   .btn-primary:active { transform: scale(0.98); }
@@ -296,8 +303,7 @@
       <div id="geocode-status" class="geocode-status"></div>
       <div id="minimap"></div>
       <div id="data-source" class="data-source-badge"></div>
-      <button class="btn btn-primary" onclick="goToQuiz()" data-i18n="start_quiz">Start School-O-Mat →</button>
-      <div class="skip-link" onclick="skipLocation()" data-i18n="skip_location">Skip location — show all schools</div>
+      <button class="btn btn-primary" onclick="goToQuiz()" id="start-btn" disabled data-i18n="start_quiz">Start School-O-Mat →</button>      <div class="skip-link" onclick="skipLocation()" data-i18n="skip_location">Skip location — show all schools</div>
     </div>
   </div>
 </div>
@@ -641,6 +647,7 @@ async function geocodeAddress(){
       var districtLabel=userDistrict?' · 🏘️ '+userDistrict:'';
       status.className='geocode-status success';
       status.textContent=t('geocode_success')+districtLabel;
+            document.getElementById('start-btn').disabled=false;
       var mapDiv=document.getElementById('minimap'); mapDiv.style.display='block';
       if(!miniMap){ miniMap=createStyledMap('minimap',[userLat,userLng],15); }
       else { miniMap.setView([userLat,userLng],15); }
