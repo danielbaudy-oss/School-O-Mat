@@ -510,7 +510,8 @@ var i18n = {
     q6_desc:"Some schools have been recently built or renovated; others are in older buildings.",
     q6_o1:"Very important", q6_o1_sub:"I want a recently built or fully renovated school",
     q6_o2:"Nice to have", q6_o2_sub:"Decent condition is fine, doesn't need to be brand new",
-    q6_o3:"Not important", q6_o3_sub:"The building doesn't matter much to me"
+      q6_o3:"Not important", q6_o3_sub:"The building doesn't matter much to me",
+    show_more:"Show all schools →"
   },
   es: {
     welcome_title:"Encuentra la Mejor Escuela para tu Hijo/a",
@@ -542,7 +543,8 @@ var i18n = {
     q6_desc:"Algunas escuelas son de nueva construcción o están renovadas; otras tienen edificios más antiguos.",
     q6_o1:"Muy importante", q6_o1_sub:"Quiero una escuela recién construida o totalmente renovada",
     q6_o2:"Estaría bien", q6_o2_sub:"Un estado decente está bien, no tiene que ser nueva",
-    q6_o3:"No importante", q6_o3_sub:"El edificio no me importa mucho"
+        q6_o3:"No importante", q6_o3_sub:"El edificio no me importa mucho",
+    show_more:"Mostrar todas las escuelas →"
   },
   ca: {
     welcome_title:"Troba la Millor Escola per al teu Fill/a",
@@ -574,7 +576,8 @@ var i18n = {
     q6_desc:"Algunes escoles són de nova construcció o estan renovades; d'altres tenen edificis més antics.",
     q6_o1:"Molt important", q6_o1_sub:"Vull una escola recent o totalment renovada",
     q6_o2:"Estaria bé", q6_o2_sub:"Un estat decent està bé, no cal que sigui nova",
-    q6_o3:"No important", q6_o3_sub:"L'edifici no m'importa gaire"
+     q6_o3:"No important", q6_o3_sub:"L'edifici no m'importa gaire",
+    show_more:"Mostrar totes les escoles →"
   }
 };
 
@@ -824,7 +827,9 @@ function renderResults(){
 
   var list=document.getElementById('results-list');
   var html='';
+  var showCount = window.showAllResults ? scoredResults.length : 3;
   scoredResults.forEach(function(r,i){
+    if(i >= showCount) return;
     var rank=i+1;
     var rankClass=rank===1?'rank-1':(rank===2?'rank-2':(rank===3?'rank-3':'rank-other'));
     var scoreClass=r.pct>=75?'score-high':(r.pct>=50?'score-med':'score-low');
@@ -871,7 +876,15 @@ function renderResults(){
     html+='<div class="school-score"><div class="score-circle '+scoreClass+'">'+r.pct+'%</div><div class="score-label">'+t('match')+'</div></div>';
     html+='</div>';
   });
+    if(!window.showAllResults && scoredResults.length > 3){
+    html+='<div style="text-align:center;margin-top:0.75rem;"><button class="btn btn-secondary" onclick="showMore()" style="width:auto;" data-i18n="show_more">Show all '+scoredResults.length+' schools →</button></div>';
+  }
   list.innerHTML=html;
+}
+
+function showMore(){
+  window.showAllResults=true;
+  renderResults();
 }
 
 function toggleDetails(btn){
@@ -881,6 +894,7 @@ function toggleDetails(btn){
 }
 
 function restart(){
+  window.showAllResults=false;
   Object.keys(answers).forEach(function(k){delete answers[k];});
   currentQuestion=0;scoredResults=[];
   showScreen('screen-welcome');
