@@ -778,22 +778,25 @@ function scoreSchool(school){
   var w4=15; maxScore+=w4;
   var outMap={'high':5,'medium':3,'low':1};
   var outPref=outMap[answers.outdoor_pref]||3;
+  var outMult=answers.outdoor_pref==='high'?6:(answers.outdoor_pref==='medium'?3.5:2);
   var outDiff=Math.abs(school.outdoor-outPref);
-  var outScore=Math.max(0,w4-(outDiff*3.5));
+  var outScore=Math.max(0,w4-(outDiff*outMult));
   score+=outScore; breakdown.outdoor=outScore;
 
   var w5=15; maxScore+=w5;
   var artsMap={'high':5,'medium':3,'low':1};
   var artsPref=artsMap[answers.arts_pref]||3;
+  var artsMult=answers.arts_pref==='high'?6:(answers.arts_pref==='medium'?3.5:2);
   var artsDiff=Math.abs(school.arts-artsPref);
-  var artsScore=Math.max(0,w5-(artsDiff*3.5));
+  var artsScore=Math.max(0,w5-(artsDiff*artsMult));
   score+=artsScore; breakdown.arts=artsScore;
 
   var w6=15; maxScore+=w6;
   var facMap={'high':5,'medium':3,'low':1};
   var facPref=facMap[answers.facilities_pref]||3;
+  var facMult=answers.facilities_pref==='high'?6:(answers.facilities_pref==='medium'?3.5:2);
   var facDiff=Math.abs(school.facilities-facPref);
-  var facScore=Math.max(0,w6-(facDiff*3.5));
+  var facScore=Math.max(0,w6-(facDiff*facMult));
   score+=facScore; breakdown.facilities=facScore;
 
   return {
