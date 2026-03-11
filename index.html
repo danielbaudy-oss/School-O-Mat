@@ -823,8 +823,13 @@ function renderResults(){
     );
     bounds.extend([r.school.lat,r.school.lng]);
   });
-  if(bounds.isValid()) resultsMap.fitBounds(bounds.pad(0.15));
-
+  if(userLat&&userLng){
+    var nearBounds=L.latLngBounds([[userLat,userLng]]);
+    scoredResults.slice(0,3).forEach(function(r){ nearBounds.extend([r.school.lat,r.school.lng]); });
+    resultsMap.fitBounds(nearBounds.pad(0.2));
+  } else if(bounds.isValid()){
+    resultsMap.fitBounds(bounds.pad(0.15));
+  }
   var list=document.getElementById('results-list');
   var html='';
   var showCount = window.showAllResults ? scoredResults.length : 3;
