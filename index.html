@@ -775,26 +775,29 @@ function scoreSchool(school){
     score+=proxBonus; breakdown.proximity=proxBonus;
   } else { score+=w2*0.5; breakdown.distance=w2*0.5; }
 
-  var w4=15; maxScore+=w4;
+  var w4=answers.outdoor_pref==='high'?25:(answers.outdoor_pref==='medium'?15:8);
+  maxScore+=w4;
   var outMap={'high':5,'medium':3,'low':1};
   var outPref=outMap[answers.outdoor_pref]||3;
-  var outMult=answers.outdoor_pref==='high'?10:(answers.outdoor_pref==='medium'?3.5:2);
+  var outMult=answers.outdoor_pref==='high'?8:(answers.outdoor_pref==='medium'?3.5:1.5);
   var outDiff=Math.abs(school.outdoor-outPref);
   var outScore=Math.max(0,w4-(outDiff*outMult));
   score+=outScore; breakdown.outdoor=outScore;
 
-  var w5=15; maxScore+=w5;
+  var w5=answers.arts_pref==='high'?25:(answers.arts_pref==='medium'?15:8);
+  maxScore+=w5;
   var artsMap={'high':5,'medium':3,'low':1};
   var artsPref=artsMap[answers.arts_pref]||3;
-  var artsMult=answers.arts_pref==='high'?10:(answers.arts_pref==='medium'?3.5:2);
+  var artsMult=answers.arts_pref==='high'?8:(answers.arts_pref==='medium'?3.5:1.5);
   var artsDiff=Math.abs(school.arts-artsPref);
   var artsScore=Math.max(0,w5-(artsDiff*artsMult));
   score+=artsScore; breakdown.arts=artsScore;
 
-  var w6=15; maxScore+=w6;
+  var w6=answers.facilities_pref==='high'?25:(answers.facilities_pref==='medium'?15:8);
+  maxScore+=w6;
   var facMap={'high':5,'medium':3,'low':1};
   var facPref=facMap[answers.facilities_pref]||3;
-  var facMult=answers.facilities_pref==='high'?10:(answers.facilities_pref==='medium'?3.5:2);
+  var facMult=answers.facilities_pref==='high'?8:(answers.facilities_pref==='medium'?3.5:1.5);
   var facDiff=Math.abs(school.facilities-facPref);
   var facScore=Math.max(0,w6-(facDiff*facMult));
   score+=facScore; breakdown.facilities=facScore;
