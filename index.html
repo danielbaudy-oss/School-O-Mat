@@ -401,6 +401,7 @@
     <footer>
       <p>Informational only. Check official zones at <a href="https://www.edubcn.cat/es/alumnado_y_familia/informacion_general_matriculacion/areas_influencia/consulta_de_centros_educativos" target="_blank">edubcn.cat</a></p>
       <p style="margin-top:0.5rem;">Made with ❤️ for Barcelona parents · School-O-Mat</p>
+      <p style="margin-top:0.5rem; font-size:0.65rem;">Anonymous usage data is collected to improve recommendations. No personal data is stored.</p>
     </footer>
   </div>
 </div>
@@ -1138,6 +1139,7 @@ function calculateAndShowResults() {
   });
 
   renderResults();
+  trackResults();
 }
 
 function renderResults() {
@@ -1265,7 +1267,35 @@ function restart() {
 }
 
 // ========== INIT ==========
+var TRACKING_URL = 'https://script.google.com/macros/s/AKfycbxa_2vElxjzbmgpGn0zTCg2JwFy_cXrF5BsnWIiYy5Er0yl5bLC8H6yt_eV1fO5qlcG/exec';
 
+function trackResults() {
+  if (!scoredResults || scoredResults.length === 0) return;
+  var top3 = scoredResults.slice(0, 3);
+  var payload = {
+    lang: currentLang,
+    manzana: userManzana || 'skipped',
+    distance_pref: answers.distance_pref || '',
+    pedagogy_pref: answers.pedagogy_pref || '',
+    facilities_pref: answers.facilities_pref || '',
+    outdoor_pref: answers.outdoor_pref || '',
+    arts_pref: answers.arts_pref || ''
+  };
+  top3.forEach(function(r, i) {
+    var n = i + 1;
+    payload['top' + n + '_code'] = r.school.id;
+    payload['top' + n + '_name'] = r.school.name;
+    payload['top' + n + '_pct'] = r.pct;
+  });
+  try {
+    fetch(TRACKING_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  } catch(e) { /* silent fail */ }
+}
 setLang('en');
 loadSchoolData();
 </script>
