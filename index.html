@@ -1056,24 +1056,31 @@ function scoreSchool(school) {
     score += 15; breakdown.catchment = 15;
   }
 
-  // === Distance preference (15 pts) ===
+  // === Distance preference (dynamic weight) ===
   if (userLat && userLng && distKm !== null) {
     var ds = 0;
     if (answers.distance_pref === 'close') {
-      if (walkMin <= 10) ds = 15;
+      // Close = 30 pts max, steep dropoff
+      if (walkMin <= 5) ds = 30;
+      else if (walkMin <= 8) ds = 25;
+      else if (walkMin <= 10) ds = 20;
       else if (walkMin <= 15) ds = 10;
-      else if (walkMin <= 20) ds = 5;
-      else ds = 1;
+      else if (walkMin <= 20) ds = 3;
+      else ds = 0;
     } else if (answers.distance_pref === 'medium') {
-      if (walkMin <= 20) ds = 15;
-      else if (walkMin <= 30) ds = 9;
-      else ds = 3;
+      // Medium = 20 pts max, gentle dropoff
+      if (walkMin <= 10) ds = 20;
+      else if (walkMin <= 15) ds = 17;
+      else if (walkMin <= 20) ds = 14;
+      else if (walkMin <= 30) ds = 7;
+      else ds = 2;
     } else {
-      ds = 10;
+      // Far = 5 pts max, barely matters
+      ds = 5;
     }
     score += ds; breakdown.distance = ds;
   } else {
-    score += 8; breakdown.distance = 8;
+    score += 10; breakdown.distance = 10;
   }
 
   // === Pedagogy (25 pts) ===
@@ -1083,16 +1090,16 @@ function scoreSchool(school) {
   var pedScore = Math.max(0, 25 * (1 - pedDiff/3.5));
   score += pedScore; breakdown.pedagogy = pedScore;
 
-  // === Features pool (30 pts) ===
+  // === Features pool (20 pts) ===
   var shareMap = {'high':3, 'medium':1.5, 'low':0.5};
   var facShare = shareMap[answers.facilities_pref] || 1.5;
   var outShare = shareMap[answers.outdoor_pref] || 1.5;
   var artShare = shareMap[answers.arts_pref] || 1.5;
   var totalShares = facShare + outShare + artShare;
 
-  var facWeight = 30 * (facShare / totalShares);
-  var outWeight = 30 * (outShare / totalShares);
-  var artWeight = 30 * (artShare / totalShares);
+  var facWeight = 20 * (facShare / totalShares);
+  var outWeight = 20 * (outShare / totalShares);
+  var artWeight = 20 * (artShare / totalShares);
 
   var facTarget = answers.facilities_pref === 'high' ? 5 : (answers.facilities_pref === 'medium' ? 3 : 1);
   var facDiff = Math.abs(school.facilities - facTarget);
