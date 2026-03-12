@@ -565,9 +565,11 @@ async function loadSchoolData() {
   schools = FALLBACK_SCHOOLS; dataSource = 'fallback'; finishLoading();
 }
 
+function finishLoading() {
+  showScreen('screen-welcome');
   var badge = document.getElementById('data-source');
   badge.innerHTML = '';
-
+}
 function createStyledMap(elementId, center, zoom) {
   var map = L.map(elementId, { zoomControl: true, attributionControl: true }).setView(center, zoom);
   L.tileLayer(MAP_TILES, { attribution: MAP_ATTR, maxZoom: 19, subdomains: 'abcd' }).addTo(map);
