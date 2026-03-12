@@ -565,15 +565,8 @@ async function loadSchoolData() {
   schools = FALLBACK_SCHOOLS; dataSource = 'fallback'; finishLoading();
 }
 
-function finishLoading() {
-  showScreen('screen-welcome');
   var badge = document.getElementById('data-source');
-  if (dataSource === 'sheet') {
-    badge.innerHTML = '📊 <span class="live">Live data</span> (' + schools.length + ' schools)';
-  } else {
-    badge.innerHTML = '📦 <span class="offline">Built-in data</span> (' + schools.length + ' schools)';
-  }
-}
+  badge.innerHTML = '';
 
 function createStyledMap(elementId, center, zoom) {
   var map = L.map(elementId, { zoomControl: true, attributionControl: true }).setView(center, zoom);
@@ -884,13 +877,10 @@ async function lookupCatchment() {
     });
 
     status.className = 'geocode-status success';
-    status.textContent = t('catchment_found') + ' · Manzana ' + manzana;
+    status.textContent = t('catchment_found');
 
     summary.classList.add('visible');
-    summary.innerHTML = '<div class="catchment-title">🎯 ' + t('catchment_found') + '</div>' +
-      '<div class="catchment-detail">' +
-      t('catchment_detail').replace('{total}', centres.length).replace('{matched}', matchedInDB) +
-      '</div>';
+    summary.innerHTML = '<div class="catchment-title">🎯 ' + t('catchment_found') + '</div>';
 
     document.getElementById('start-btn').disabled = false;
     showMinimap();
