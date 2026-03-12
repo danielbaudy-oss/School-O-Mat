@@ -447,7 +447,7 @@ async function edubcnFetch(path) {
   // Try custom proxy
   if (CUSTOM_PROXY) {
     try {
-      var resp2 = await fetch(CUSTOM_PROXY + path, { signal: AbortSignal.timeout(5000) });
+      var resp2 = await fetch(CUSTOM_PROXY + '/atp_rest' + path, { signal: AbortSignal.timeout(5000) });
       if (resp2.ok) return await resp2.json();
     } catch(e) { console.warn('Custom proxy failed:', e.message); }
   }
