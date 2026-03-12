@@ -919,7 +919,7 @@ function showMinimap() {
 
   var centerLat, centerLng, zoom;
   if (userLat && userLng) {
-    centerLat = userLat; centerLng = userLng; zoom = 15;
+    centerLat = userLat; centerLng = userLng; zoom = 16;
   } else if (catchmentSchoolsFromAPI.length > 0) {
     var sLat = 0, sLng = 0, count = 0;
     catchmentSchoolsFromAPI.forEach(function(c) {
@@ -935,10 +935,12 @@ function showMinimap() {
   if (!miniMap) { miniMap = createStyledMap('minimap', [centerLat, centerLng], zoom); }
   else { miniMap.setView([centerLat, centerLng], zoom); }
 
+  // Clear existing markers
   miniMap.eachLayer(function(layer) {
     if (layer instanceof L.Marker || layer instanceof L.CircleMarker) miniMap.removeLayer(layer);
   });
 
+  // Only show user marker — no school markers on this map
   if (userLat && userLng) {
     miniMarker = L.marker([userLat, userLng], {
       icon: L.divIcon({
@@ -946,19 +948,8 @@ function showMinimap() {
         className:'', iconSize:[28,28], iconAnchor:[14,14]
       })
     }).addTo(miniMap);
+    miniMap.setView([userLat, userLng], 16);
   }
-
-  var bounds = userLat ? L.latLngBounds([[userLat, userLng]]) : L.latLngBounds();
-  catchmentSchoolsFromAPI.forEach(function(c) {
-    if (c.LATITUD && c.LONGITUD) {
-      var lat = parseFloat(c.LATITUD), lng = parseFloat(c.LONGITUD);
-      L.circleMarker([lat, lng], {
-        radius: 6, fillColor: '#10b981', color: '#fff', weight: 2, fillOpacity: 0.9
-      }).addTo(miniMap).bindPopup('<b>' + c.NOM + '</b><br><span style="color:#065f46;font-size:12px;">✅ 30 pts</span>');
-      bounds.extend([lat, lng]);
-    }
-  });
-  if (bounds.isValid()) miniMap.fitBounds(bounds.pad(0.15));
 }
 
 function skipLocation() {
@@ -1289,3 +1280,4 @@ loadSchoolData();
 </script>
 </body>
 </html>
+
