@@ -1272,30 +1272,26 @@ var TRACKING_URL = 'https://script.google.com/macros/s/AKfycbxa_2vElxjzbmgpGn0zT
 function trackResults() {
   if (!scoredResults || scoredResults.length === 0) return;
   var top3 = scoredResults.slice(0, 3);
-  var payload = {
-    lang: currentLang,
-    manzana: userManzana || 'skipped',
-    distance_pref: answers.distance_pref || '',
-    pedagogy_pref: answers.pedagogy_pref || '',
-    facilities_pref: answers.facilities_pref || '',
-    outdoor_pref: answers.outdoor_pref || '',
-    arts_pref: answers.arts_pref || ''
-  };
+  var params = new URLSearchParams();
+  params.set('lang', currentLang);
+  params.set('manzana', userManzana || 'skipped');
+  params.set('distance_pref', answers.distance_pref || '');
+  params.set('pedagogy_pref', answers.pedagogy_pref || '');
+  params.set('facilities_pref', answers.facilities_pref || '');
+  params.set('outdoor_pref', answers.outdoor_pref || '');
+  params.set('arts_pref', answers.arts_pref || '');
   top3.forEach(function(r, i) {
     var n = i + 1;
-    payload['top' + n + '_code'] = r.school.id;
-    payload['top' + n + '_name'] = r.school.name;
-    payload['top' + n + '_pct'] = r.pct;
+    params.set('top' + n + '_code', r.school.id);
+    params.set('top' + n + '_name', r.school.name);
+    params.set('top' + n + '_pct', r.pct);
   });
-  try {
-    fetch(TRACKING_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-  } catch(e) { /* silent fail */ }
+  // Silent pixel tracking — no CORS issues
+  var img = new Image();
+  img.src = TRACKING_URL + '?' + params.toString();
 }
+
+
 setLang('en');
 loadSchoolData();
 </script>
