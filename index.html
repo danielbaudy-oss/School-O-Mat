@@ -77,14 +77,22 @@
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   .container { max-width: 600px; margin: 0 auto; padding: 1rem; }
   .hero { text-align: center; padding: 2rem 0.5rem 1.5rem; }
-  .hero-icon { font-size: 3rem; margin-bottom: 0.75rem; }
-  .hero h1 { font-size: 1.5rem; font-weight: 800; color: var(--gray-900); margin-bottom: 0.4rem; line-height: 1.2; }
+.hero-icon {
+  font-size: 3rem; margin-bottom: 0.75rem;
+  filter: drop-shadow(0 4px 12px rgba(37, 99, 235, 0.2));
+}.hero h1 {
+  font-size: 1.5rem; font-weight: 800; margin-bottom: 0.4rem; line-height: 1.2;
+  background: linear-gradient(135deg, var(--gray-900) 40%, var(--primary));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
   .hero p { font-size: 0.95rem; color: var(--gray-500); max-width: 400px; margin: 0 auto 1.5rem; }
-  .location-card {
-    background: white; border-radius: var(--radius);
-    padding: 1.25rem; box-shadow: var(--shadow-md);
-    margin: 0 auto 1rem; text-align: left;
-  }
+.location-card {
+  background: linear-gradient(170deg, white 60%, var(--primary-light));
+  border-radius: var(--radius);
+  padding: 1.25rem; box-shadow: var(--shadow-md);
+  margin: 0 auto 1rem; text-align: left;
+  border: 1px solid rgba(37, 99, 235, 0.08);
+}
   .location-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.15rem; }
   .location-card .subtitle { font-size: 0.8rem; color: var(--gray-400); margin-bottom: 0.75rem; }
   .street-input-wrap { position: relative; margin-bottom: 0.5rem; }
