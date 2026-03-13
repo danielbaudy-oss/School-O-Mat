@@ -1378,30 +1378,26 @@ function restart() {
 function trackResults() {
   if (!scoredResults || scoredResults.length === 0) return;
   var top3 = scoredResults.slice(0, 3);
-  var payload = {
+  var params = {
     lang: currentLang,
     manzana: userManzana || 'skipped',
     distance_pref: answers.distance_pref || '',
-    pedagogy_pref: answers.pedagogy_pref || '',
+    pedagogy_pref: String(answers.pedagogy_pref || ''),
     facilities_pref: answers.facilities_pref || '',
     outdoor_pref: answers.outdoor_pref || '',
     arts_pref: answers.arts_pref || ''
   };
   top3.forEach(function(r, i) {
     var n = i + 1;
-    payload['top' + n + '_code'] = r.school.id;
-    payload['top' + n + '_name'] = r.school.name;
-    payload['top' + n + '_pct'] = r.pct;
+    params['top' + n + '_code'] = r.school.id;
+    params['top' + n + '_name'] = r.school.name;
+    params['top' + n + '_pct'] = String(r.pct);
   });
+
+  // Image pixel GET — bypasses CORS entirely, follows redirects
   try {
-    var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon(TRACKING_URL, blob);
-    } else {
-      fetchWithTimeout(TRACKING_URL, {
-        method: 'POST', mode: 'no-cors', body: blob
-      }, 5000).catch(function() {});
-    }
+    var img = new Image();
+    img.src = TRACKING_URL + '?' + new URLSearchParams(params).toString();
   } catch(e) { /* silent fail */ }
 }
 
