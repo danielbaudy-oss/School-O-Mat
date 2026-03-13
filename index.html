@@ -663,6 +663,9 @@ catchment_results_note:"Schools marked with ✅ are in your catchment area. Data
     pref_distance:"Distance", pref_pedagogy:"Teaching Style",
     pref_facilities:"Facilities", pref_outdoor:"Outdoor Space", pref_arts:"Arts & Culture",
     loading_data:"Loading school data...",
+    data_error_title:"Couldn't load school data",
+data_error_msg:"We had trouble connecting to our database. Check your connection and try again.",
+data_error_retry:"🔄 Try Again",
     show_more:"Show {n} more schools ▾",
     show_less:"Show less ▴",
     q1_title:"What teaching approach do you prefer?",
@@ -712,6 +715,9 @@ catchment_results_note:"Las escuelas marcadas con ✅ están en tu zona de influ
     pref_distance:"Distancia", pref_pedagogy:"Estilo Pedagógico",
     pref_facilities:"Instalaciones", pref_outdoor:"Espacio Exterior", pref_arts:"Artes y Cultura",
     loading_data:"Cargando datos de escuelas...",
+    data_error_title:"No se pudieron cargar los datos",
+data_error_msg:"Tuvimos problemas conectando con nuestra base de datos. Revisa tu conexión e inténtalo de nuevo.",
+data_error_retry:"🔄 Reintentar",
     show_more:"Mostrar {n} escuelas más ▾",
     show_less:"Mostrar menos ▴",
     q1_title:"¿Qué enfoque pedagógico prefieres?", q1_desc:"Desde tradicional hasta innovador.",
@@ -758,6 +764,9 @@ catchment_results_note:"Les escoles marcades amb ✅ estan a la teva zona d'infl
     pref_distance:"Distància", pref_pedagogy:"Estil Pedagògic",
     pref_facilities:"Instal·lacions", pref_outdoor:"Espai Exterior", pref_arts:"Arts i Cultura",
     loading_data:"Carregant dades d'escoles...",
+    data_error_title:"No s'han pogut carregar les dades",
+data_error_msg:"Hem tingut problemes connectant amb la nostra base de dades. Revisa la teva connexió i torna-ho a provar.",
+data_error_retry:"🔄 Tornar a provar",
     show_more:"Mostrar {n} escoles més ▾",
     show_less:"Mostrar menys ▴",
     q1_title:"Quin enfocament pedagògic prefereixes?", q1_desc:"Des de tradicional fins a innovador.",
@@ -1243,13 +1252,28 @@ function scoreSchool(school) {
 async function calculateAndShowResults() {
   // Wait for school data if still loading
   if (!dataReady) {
-    // Show a brief inline loading state on the Next button
     var nextBtn = document.getElementById('next-btn');
     nextBtn.disabled = true;
     nextBtn.innerHTML = '<span class="spinner-sm"></span> ' + t('loading_data');
     await ensureDataReady();
     nextBtn.disabled = false;
     nextBtn.textContent = t('next_btn');
+  }
+
+  // If data failed to load properly, show error instead of bad results
+  if (dataSource === 'fallback') {
+    showScreen('screen-results');
+    document.getElementById('answers-summary').innerHTML = '';
+    document.getElementById('catchment-results-note').style.display = 'none';
+    document.getElementById('results-map').style.display = 'none';
+    document.getElementById('results-list').innerHTML =
+      '<div style="text-align:center; padding:2rem 1rem;">' +
+      '<div style="font-size:2.5rem; margin-bottom:0.75rem;">😕</div>' +
+      '<h2 style="font-size:1.1rem; color:var(--gray-800); margin-bottom:0.5rem;">' + t('data_error_title') + '</h2>' +
+      '<p style="font-size:0.9rem; color:var(--gray-500); margin-bottom:1.5rem;">' + t('data_error_msg') + '</p>' +
+      '<button class="btn btn-primary" onclick="retryAndRecalculate()" style="width:auto;">' + t('data_error_retry') + '</button>' +
+      '</div>';
+    return;
   }
 
   showScreen('screen-results');
@@ -1426,6 +1450,23 @@ function restart() {
   clearStreet();
   showScreen('screen-welcome');
 }
+
+async function retryAndRecalculate() {
+  dataReady = false;
+  dataSource = 'none';
+  document.getElementById('results-list').innerHTML =
+    '<div style="text-align:center; padding:2rem;"><div class="spinner-sm-dark"></div></div>';
+  await loadSchoolData();
+  if (dataSource === 'fallback') {
+    // Still failed — show error again
+    calculateAndShowResults();
+  } else {
+    // Success — show real results
+    document.getElementById('results-map').style.display = '';
+    calculateAndShowResults();
+  }
+}
+
 
 // ========== TRACKING ==========
 
