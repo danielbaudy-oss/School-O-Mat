@@ -955,7 +955,8 @@ async function geocodeForLatLng(query) {
   try {
     var resp = await fetchWithTimeout(
       'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=1&countrycodes=es',
-      {}, 5000
+      { headers: { 'User-Agent': 'SchoolOMat/1.0 (school-o-mat.app)' } },
+      5000
     );
     var data = await resp.json();
     if (data.length > 0) {
