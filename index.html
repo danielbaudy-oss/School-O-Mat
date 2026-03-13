@@ -1115,76 +1115,71 @@ function scoreSchool(school) {
     walkMin = estimateWalkMinutes(distKm);
   }
 
+  // === CARE LEVELS ===
+  // 0 = don't care (no weight), 1.5 = nice to have, 3 = very important
+  // Pedagogy always has weight since you express a preference
+
+  var distCare = answers.distance_pref === 'close' ? 3 : (answers.distance_pref === 'medium' ? 1.5 : 0);
+  var pedCare = 2.5;
+  var facCare = answers.facilities_pref === 'high' ? 3 : (answers.facilities_pref === 'medium' ? 1.5 : 0);
+  var outCare = answers.outdoor_pref === 'high' ? 3 : (answers.outdoor_pref === 'medium' ? 1.5 : 0);
+  var artCare = answers.arts_pref === 'high' ? 3 : (answers.arts_pref === 'medium' ? 1.5 : 0);
+
+  var totalCare = distCare + pedCare + facCare + outCare + artCare;
+
+  // === DYNAMIC WEIGHTS (sum to 100) ===
+  var distW = (distCare / totalCare) * 100;
+  var pedW = (pedCare / totalCare) * 100;
+  var facW = (facCare / totalCare) * 100;
+  var outW = (outCare / totalCare) * 100;
+  var artW = (artCare / totalCare) * 100;
+
   var score = 0;
-  var maxScore = 100;
 
-  // Catchment / Proximity (30 pts)
-  if (catchmentSchoolCodes.length > 0) {
-    if (inCatchment) { score += 30; } else { score += 3; }
-  } else {
-    score += 15;
-  }
-
-  // Distance preference (15 pts)
-  if (userLat && userLng && distKm !== null) {
-    var ds = 0;
-    if (answers.distance_pref === 'close') {
-      if (walkMin <= 10) ds = 15;
-      else if (walkMin <= 15) ds = 10;
-      else if (walkMin <= 20) ds = 5;
-      else ds = 1;
-    } else if (answers.distance_pref === 'medium') {
-      if (walkMin <= 20) ds = 15;
-      else if (walkMin <= 30) ds = 9;
-      else ds = 3;
+  // === DISTANCE (0 to distW points) ===
+  if (distW > 0) {
+    if (walkMin !== null) {
+      // Smooth decay: 5min≈90%, 10min≈70%, 15min≈50%, 20min≈35%, 30min≈10%
+      var dRaw = Math.max(0.05, Math.min(1, 1 - Math.pow(walkMin / 35, 1.2)));
+      // Catchment bonus within distance dimension
+      if (inCatchment) dRaw = Math.min(1, dRaw + 0.12);
+      score += dRaw * distW;
     } else {
-      ds = 10;
+      // No location provided — neutral middle ground
+      score += 0.5 * distW;
     }
-    score += ds;
-  } else {
-    score += 8;
   }
 
-  // Pedagogy (25 pts)
-  var pedMap = {1:1.5, 2:3, 3:5};
-  var prefPed = pedMap[answers.pedagogy_pref] || 3;
-  var pedDiff = Math.abs(school.pedagogy - prefPed);
-  score += Math.max(0, 25 * (1 - pedDiff/3.5));
+  // === PEDAGOGY (0 to pedW points) ===
+  // Map preference to target on 1–5 scale
+  var pedTarget = answers.pedagogy_pref === 1 ? 1.5 : (answers.pedagogy_pref === 2 ? 3 : 4.5);
+  var pedDiff = Math.abs(school.pedagogy - pedTarget);
+  var pedRaw = Math.max(0, 1 - (pedDiff / 3.5));
+  score += pedRaw * pedW;
 
-  // Features pool (30 pts)
-  var shareMap = {'high':3, 'medium':1.5, 'low':0.5};
-  var facShare = shareMap[answers.facilities_pref] || 1.5;
-  var outShare = shareMap[answers.outdoor_pref] || 1.5;
-  var artShare = shareMap[answers.arts_pref] || 1.5;
-  var totalShares = facShare + outShare + artShare;
+  // === FACILITIES (0 to facW points) ===
+  if (facW > 0) {
+    score += (school.facilities / 5) * facW;
+  }
 
-  var facWeight = 30 * (facShare / totalShares);
-  var outWeight = 30 * (outShare / totalShares);
-  var artWeight = 30 * (artShare / totalShares);
+  // === OUTDOOR (0 to outW points) ===
+  if (outW > 0) {
+    score += (school.outdoor / 5) * outW;
+  }
 
-  var facTarget = answers.facilities_pref === 'high' ? 5 : (answers.facilities_pref === 'medium' ? 3 : 1);
-  var facDiff = Math.abs(school.facilities - facTarget);
-  var facMax = answers.facilities_pref === 'high' ? 4 : 2;
-  score += Math.max(0, facWeight * (1 - facDiff/facMax));
+  // === ARTS (0 to artW points) ===
+  if (artW > 0) {
+    score += (school.arts / 5) * artW;
+  }
 
-  var outTarget = answers.outdoor_pref === 'high' ? 5 : (answers.outdoor_pref === 'medium' ? 3 : 1);
-  var outDiff = Math.abs(school.outdoor - outTarget);
-  var outMax = answers.outdoor_pref === 'high' ? 4 : 2;
-  score += Math.max(0, outWeight * (1 - outDiff/outMax));
-
-  var artTarget = answers.arts_pref === 'high' ? 5 : (answers.arts_pref === 'medium' ? 3 : 1);
-  var artDiff = Math.abs(school.arts - artTarget);
-  var artMax = answers.arts_pref === 'high' ? 4 : 2;
-  score += Math.max(0, artWeight * (1 - artDiff/artMax));
+  var pct = Math.min(Math.round(score), 100);
 
   return {
-    school: school, score: score, maxScore: maxScore,
-    pct: Math.round((score/maxScore)*100),
+    school: school, pct: pct,
     distKm: distKm, walkMin: walkMin,
     inCatchment: inCatchment, proxPts: proxPts
   };
 }
-
 // ========== RESULTS ==========
 
 async function calculateAndShowResults() {
@@ -1203,9 +1198,12 @@ async function calculateAndShowResults() {
   scoredResults = schools.map(function(s) { return scoreSchool(s); });
 
   scoredResults.sort(function(a, b) {
+    // Catchment schools first
     if (a.inCatchment && !b.inCatchment) return -1;
     if (!a.inCatchment && b.inCatchment) return 1;
+    // Then by match score
     if (b.pct !== a.pct) return b.pct - a.pct;
+    // Tiebreaker: closer school wins
     var distA = a.distKm !== null ? a.distKm : 9999;
     var distB = b.distKm !== null ? b.distKm : 9999;
     return distA - distB;
