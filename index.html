@@ -1145,7 +1145,7 @@ function scoreSchool(school) {
   // Pedagogy always has weight since you express a preference
 
   var distCare = answers.distance_pref === 'close' ? 3 : (answers.distance_pref === 'medium' ? 1.5 : 0);
-  var pedCare = 2.5;
+  var pedCare = 3.5;
   var facCare = answers.facilities_pref === 'high' ? 3 : (answers.facilities_pref === 'medium' ? 1.5 : 0);
   var outCare = answers.outdoor_pref === 'high' ? 3 : (answers.outdoor_pref === 'medium' ? 1.5 : 0);
   var artCare = answers.arts_pref === 'high' ? 3 : (answers.arts_pref === 'medium' ? 1.5 : 0);
