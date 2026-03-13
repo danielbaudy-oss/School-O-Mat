@@ -1267,15 +1267,13 @@ function renderResults() {
 
   scoredResults.forEach(function(r, i) {
     if (!r.school.lat || !r.school.lng) return;
-    var color, sz;
-    if (r.inCatchment) {
-      if (i === 0) { color = '#f59e0b'; sz = 11; }
-      else if (i === 1) { color = '#2563eb'; sz = 10; }
-      else if (i === 2) { color = '#b63bdb'; sz = 9; }
-      else { color = '#10b981'; sz = 7; }
-    } else {
-      color = '#d1d5db'; sz = 5;
-    }
+        var color, sz;
+    // Top 3 always get their rank color
+    if (i === 0) { color = '#f59e0b'; sz = 11; }
+    else if (i === 1) { color = '#2563eb'; sz = 10; }
+    else if (i === 2) { color = '#b63bdb'; sz = 9; }
+    else if (r.inCatchment) { color = '#10b981'; sz = 7; }
+    else { color = '#d1d5db'; sz = 5; }
 
     L.circleMarker([r.school.lat, r.school.lng], {
       radius: sz, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.9
