@@ -975,6 +975,8 @@ async function geocodeForLatLng(query) {
 }
 
 function showMinimap() {
+  var scrollY = window.scrollY || window.pageYOffset;
+
   var mapDiv = document.getElementById('minimap');
   mapDiv.style.display = 'block';
 
@@ -982,8 +984,12 @@ function showMinimap() {
   var centerLng = userLng || 2.196;
   var zoom = (userLat && userLng) ? 16 : 14;
 
-  if (!miniMap) { miniMap = createStyledMap('minimap', [centerLat, centerLng], zoom); }
-  else { miniMap.setView([centerLat, centerLng], zoom); }
+  if (!miniMap) {
+    miniMap = createStyledMap('minimap', [centerLat, centerLng], zoom);
+    miniMap.scrollWheelZoom.disable();
+  } else {
+    miniMap.setView([centerLat, centerLng], zoom, { animate: false });
+  }
 
   miniMap.eachLayer(function(layer) {
     if (layer instanceof L.Marker || layer instanceof L.CircleMarker) miniMap.removeLayer(layer);
@@ -996,8 +1002,11 @@ function showMinimap() {
         className:'', iconSize:[28,28], iconAnchor:[14,14]
       })
     }).addTo(miniMap);
-    miniMap.setView([userLat, userLng], 16);
+    miniMap.setView([userLat, userLng], 16, { animate: false });
   }
+
+  // Restore scroll position — Leaflet map init can steal focus
+  window.scrollTo(0, scrollY);
 }
 
 function skipLocation() {
