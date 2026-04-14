@@ -76,6 +76,35 @@ body {
   .lang-btn.active { background: white; color: var(--primary); box-shadow: var(--shadow); }
   .screen { display: none; animation: fadeIn 0.3s ease; }
   .screen.active { display: block; }
+  .landing-screen {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: calc(100vh - 52px); min-height: calc(100dvh - 52px);
+    text-align: center; padding: 2rem 1.5rem;
+  }
+  .landing-logo { font-size: 2rem; font-weight: 800; color: var(--primary); margin-bottom: 0.5rem; }
+  .landing-badge {
+    display: inline-block; padding: 0.25rem 0.8rem; border-radius: 100px;
+    background: var(--primary-light); color: var(--primary-dark);
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 1.5rem;
+  }
+  .landing-desc {
+    font-size: 1rem; color: var(--gray-600); max-width: 440px;
+    margin: 0 auto 1rem; line-height: 1.7;
+  }
+  .landing-disclaimer {
+    font-size: 0.8rem; color: var(--gray-400); max-width: 400px;
+    margin: 0 auto 2rem; line-height: 1.5; font-style: italic;
+  }
+  .btn-landing {
+    padding: 1rem 2.5rem; font-size: 1.15rem; font-weight: 700;
+    border-radius: var(--radius); border: none; cursor: pointer;
+    background: var(--primary); color: white;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+    transition: all 0.2s;
+  }
+  .btn-landing:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35); }
+  .btn-landing:active { transform: scale(0.98); }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .container { max-width: 600px; margin: 0 auto; padding: 1rem; }
   .hero { text-align: center; padding: 2rem 0.5rem 1.5rem; }
@@ -312,10 +341,23 @@ body {
   }
   .catchment-note a { color: #065f46; }
   .btn-share {
-    background: var(--success); color: white;
-    display: inline-flex; align-items: center; gap: 0.5rem;
+    position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--primary); color: white;
+    display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; box-shadow: var(--shadow-lg);
+    transition: all 0.2s; padding: 0;
   }
-  .btn-share:hover { background: #059669; }
+  .btn-share:hover { background: var(--primary-dark); transform: scale(1.08); }
+  .btn-share:active { transform: scale(0.95); }
+  .btn-share svg { width: 22px; height: 22px; fill: white; }
+  .btn-share-tooltip {
+    position: absolute; right: 56px; top: 50%; transform: translateY(-50%);
+    background: var(--gray-800); color: white; font-size: 0.78rem; font-weight: 600;
+    padding: 0.35rem 0.7rem; border-radius: 6px; white-space: nowrap;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .btn-share:hover .btn-share-tooltip { opacity: 1; }
   .share-toast {
     position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
     background: var(--gray-800); color: white; padding: 0.6rem 1.2rem;
@@ -358,8 +400,19 @@ body {
   </div>
 </nav>
 
-<!-- Welcome shown immediately — no loading screen -->
-<div id="screen-welcome" class="screen active">
+<!-- Landing screen — Wahl-O-Mat style -->
+<div id="screen-landing" class="screen active">
+  <div class="landing-screen">
+    <div class="landing-logo">School-O-Mat</div>
+    <div class="landing-badge" data-i18n="landing_badge">Barcelona · Public Schools · Ages 3–12</div>
+    <p class="landing-desc" data-i18n="landing_desc">All public primary schools in Barcelona have answered. Now it's your turn: compare your preferences with what each school offers and find your best match.</p>
+    <p class="landing-disclaimer" data-i18n="landing_disclaimer">School-O-Mat is not a school recommendation — it is an informational tool to help families explore their options.</p>
+    <button class="btn-landing" onclick="goToWelcome()" data-i18n="landing_start">Start</button>
+  </div>
+</div>
+
+<!-- Address / location screen -->
+<div id="screen-welcome" class="screen">
   <div class="container">
     <div class="hero">
       <h1 data-i18n="welcome_title">Find the Best School for Your Child</h1>
@@ -409,11 +462,9 @@ body {
     <div id="catchment-results-note" class="catchment-note" style="display:none;"></div>
     <div id="results-map"></div>
     <div id="results-list"></div>
-    <div style="text-align:center; margin-top:1.5rem; display:flex; justify-content:center; gap:0.75rem; flex-wrap:wrap;">
-      <button class="btn btn-share" onclick="shareResults()" style="width:auto;">📤 <span data-i18n="share_btn">Share with other parents</span></button>
-      <button class="btn btn-outline" onclick="restart()" data-i18n="restart_btn" style="width:auto;">🔄 Start Over</button>
+    <div style="text-align:center; margin-top:1.5rem;">
+      <button class="btn btn-outline" onclick="restart()" data-i18n="restart_btn" style="width:auto;">Start Over</button>
     </div>
-    <div id="share-toast" class="share-toast"></div>
     <footer>
       <p>Informational only. Check official zones at <a href="https://www.edubcn.cat/es/alumnado_y_familia/informacion_general_matriculacion/areas_influencia/consulta_de_centros_educativos" target="_blank">edubcn.cat</a></p>
       <p style="margin-top:0.5rem;">Made with ❤️ for Barcelona parents · School-O-Mat</p>
@@ -421,6 +472,13 @@ body {
     </footer>
   </div>
 </div>
+
+<!-- Floating share button -->
+<button class="btn-share" onclick="shareResults()" aria-label="Share">
+  <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="white" stroke-width="2"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="white" stroke-width="2"/></svg>
+  <span class="btn-share-tooltip" data-i18n="share_btn">Share</span>
+</button>
+<div id="share-toast" class="share-toast"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -652,6 +710,10 @@ async function ensureDataReady() {
 
 var i18n = {
   en: {
+    landing_badge:"Barcelona · Public Schools · Ages 3–12",
+    landing_desc:"All public primary schools in Barcelona have answered. Now it's your turn: compare your preferences with what each school offers and find your best match.",
+    landing_disclaimer:"School-O-Mat is not a school recommendation — it is an informational tool to help families explore their options.",
+    landing_start:"Start",
     welcome_title:"Find the Best School for Your Child",
     welcome_subtitle:"Answer a few questions and discover which <span class=\"highlight\">public</span> schools (3-12 years) in <span class=\"highlight\">Barcelona</span> match your family best.",
    location_title:"📍 Your Neighbourhood",
@@ -664,8 +726,8 @@ location_subtitle:"Where are you looking for a school? This helps us find the cl
     prev_btn:"← Back", next_btn:"Next →",
     results_title:"Your School Matches",
     results_subtitle:"Based on your preferences — official proximity points from edubcn.cat.",
-    restart_btn:"🔄 Start Over", match:"match", walk:"walk",
-    share_btn:"Share with other parents",
+    restart_btn:"Start Over", match:"match", walk:"walk",
+    share_btn:"Share",
     share_title:"School-O-Mat — Find the best school in Barcelona",
     share_text:"I used School-O-Mat to find the best public schools for my kids in Barcelona. Try it!",
     share_copied:"Link copied to clipboard ✓",
@@ -710,6 +772,10 @@ data_error_retry:"🔄 Try Again",
     q6_o3:"Not important", q6_o3_sub:"The building doesn't matter much to me"
   },
   es: {
+    landing_badge:"Barcelona · Escuelas Públicas · 3–12 años",
+    landing_desc:"Todas las escuelas públicas de primaria de Barcelona han respondido. Ahora te toca a ti: compara tus preferencias con lo que ofrece cada escuela y encuentra tu mejor opción.",
+    landing_disclaimer:"School-O-Mat no es una recomendación escolar — es una herramienta informativa para ayudar a las familias a explorar sus opciones.",
+    landing_start:"Empezar",
     welcome_title:"Encuentra la Mejor Escuela para tu Hijo/a",
     welcome_subtitle:"Responde unas preguntas y descubre qué escuelas <span class=\"highlight\">públicas</span> (3–12 años) de <span class=\"highlight\">Barcelona</span> encajan mejor.",
     location_title:"📍 Tu Zona",
@@ -722,8 +788,8 @@ street_placeholder:"Escribe el nombre de tu calle...",
     prev_btn:"← Atrás", next_btn:"Siguiente →",
     results_title:"Tus Escuelas Recomendadas",
     results_subtitle:"Según tus preferencias — puntos de proximidad oficiales de edubcn.cat.",
-    restart_btn:"🔄 Empezar de Nuevo", match:"compatibilidad", walk:"a pie",
-    share_btn:"Compartir con otros padres",
+    restart_btn:"Empezar de Nuevo", match:"compatibilidad", walk:"a pie",
+    share_btn:"Compartir",
     share_title:"School-O-Mat — Encuentra la mejor escuela en Barcelona",
     share_text:"He usado School-O-Mat para encontrar las mejores escuelas públicas para mis hijos en Barcelona. ¡Pruébalo!",
     share_copied:"Enlace copiado ✓",
@@ -763,6 +829,10 @@ data_error_retry:"🔄 Reintentar",
     q6_o3:"No importante", q6_o3_sub:"El edificio no me importa mucho"
   },
   ca: {
+    landing_badge:"Barcelona · Escoles Públiques · 3–12 anys",
+    landing_desc:"Totes les escoles públiques de primària de Barcelona han respost. Ara et toca a tu: compara les teves preferències amb el que ofereix cada escola i troba la teva millor opció.",
+    landing_disclaimer:"School-O-Mat no és una recomanació escolar — és una eina informativa per ajudar les famílies a explorar les seves opcions.",
+    landing_start:"Començar",
     welcome_title:"Troba la Millor Escola per al teu Fill/a",
     welcome_subtitle:"Respon unes preguntes i descobreix quines escoles <span class=\"highlight\">públiques</span> (3–12 anys) de <span class=\"highlight\">Barcelona</span> encaixen millor.",
     location_title:"📍 La Teva Zona",
@@ -775,8 +845,8 @@ location_subtitle:"A quina zona busques escola? Això ens ajuda a trobar les mil
     prev_btn:"← Enrere", next_btn:"Següent →",
     results_title:"Les Teves Escoles Recomanades",
     results_subtitle:"Segons les teves preferències — punts de proximitat oficials d'edubcn.cat.",
-    restart_btn:"🔄 Tornar a Començar", match:"compatibilitat", walk:"a peu",
-    share_btn:"Compartir amb altres pares",
+    restart_btn:"Tornar a Començar", match:"compatibilitat", walk:"a peu",
+    share_btn:"Compartir",
     share_title:"School-O-Mat — Troba la millor escola a Barcelona",
     share_text:"He fet servir School-O-Mat per trobar les millors escoles públiques per als meus fills a Barcelona. Prova-ho!",
     share_copied:"Enllaç copiat ✓",
@@ -1103,6 +1173,10 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById(id).classList.add('active');
   if (isNewScreen) window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function goToWelcome() {
+  showScreen('screen-welcome');
 }
 
 function goToQuiz() {
@@ -1478,7 +1552,7 @@ function restart() {
   Object.keys(answers).forEach(function(k) { delete answers[k]; });
   currentQuestion = 0; scoredResults = [];
   clearStreet();
-  showScreen('screen-welcome');
+  showScreen('screen-landing');
 }
 
 async function retryAndRecalculate() {
