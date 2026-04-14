@@ -190,10 +190,11 @@ body {
   .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
   .btn-sm { padding: 0.6rem 1rem; font-size: 0.9rem; width: auto; }
   .skip-link {
-    display: block; text-align: center; color: var(--gray-600);
-    font-size: 0.85rem; margin-top: 0.75rem; cursor: pointer;
-    text-decoration: underline; padding: 0.5rem;
+    display: block; text-align: center; color: var(--gray-400);
+    font-size: 0.9rem; font-weight: 500; margin-top: 0.75rem; cursor: pointer;
+    text-decoration: none; padding: 0.5rem;
   }
+  .skip-link:hover { color: var(--gray-500); }
 #minimap {
   height: 180px; border-radius: var(--radius-sm); margin-bottom: 0.75rem;
   border: 2px solid var(--gray-200); overflow: hidden;
@@ -415,12 +416,11 @@ body {
 <div id="screen-welcome" class="screen">
   <div class="container">
     <div class="hero">
-      <h1 data-i18n="welcome_title">Find the Best School for Your Child</h1>
-      <p data-i18n="welcome_subtitle">Answer a few questions and discover which <span class="highlight">public</span> schools (3–12 years) in <span class="highlight">Barcelona</span> match your family best.</p>
+      <h1 data-i18n="location_subtitle">Where are you looking for a school? This helps us find the closest matches for you.</h1>
     </div>
     <div class="location-card">
       <h3 data-i18n="location_title">📍 Your Neighbourhood</h3>
-      <p class="subtitle" data-i18n="location_subtitle">Enter your street and number to see which schools give you the maximum 30 proximity points.</p>
+      <p class="subtitle" data-i18n="location_hint">Enter your street and number to see which schools give you the maximum 30 proximity points.</p>
       <div id="street-selection" class="street-input-wrap">
         <input type="text" id="street-input" data-i18n-placeholder="street_placeholder" placeholder="Type your street name..." autocomplete="off">
         <div id="street-dropdown" class="autocomplete-dropdown"></div>
@@ -711,13 +711,14 @@ async function ensureDataReady() {
 var i18n = {
   en: {
     landing_badge:"Barcelona · Public Schools · Ages 3–12",
-    landing_desc:"All public primary schools in Barcelona have answered. Now it's your turn: compare your preferences with what each school offers and find your best match.",
+    landing_desc:"Answer a few quick questions about what matters to your family and we'll match you with the public schools in Barcelona that fit best.",
     landing_disclaimer:"School-O-Mat is not a school recommendation — it is an informational tool to help families explore their options.",
     landing_start:"Start",
     welcome_title:"Find the Best School for Your Child",
     welcome_subtitle:"Answer a few questions and discover which <span class=\"highlight\">public</span> schools (3-12 years) in <span class=\"highlight\">Barcelona</span> match your family best.",
-   location_title:"📍 Your Neighbourhood",
+    location_title:"📍 Your Neighbourhood",
 location_subtitle:"Where are you looking for a school? This helps us find the closest matches for you.",
+    location_hint:"Enter your street and number to see which schools give you the maximum 30 proximity points.",
     street_placeholder:"Type your street name...",
     number_placeholder:"House number (e.g. 181)",
     search_btn:"Search", start_quiz:"Start School-O-Mat →", skip_location:"Skip location — show all schools",
@@ -773,13 +774,14 @@ data_error_retry:"🔄 Try Again",
   },
   es: {
     landing_badge:"Barcelona · Escuelas Públicas · 3–12 años",
-    landing_desc:"Todas las escuelas públicas de primaria de Barcelona han respondido. Ahora te toca a ti: compara tus preferencias con lo que ofrece cada escuela y encuentra tu mejor opción.",
+    landing_desc:"Responde unas preguntas rápidas sobre lo que importa a tu familia y te mostraremos las escuelas públicas de Barcelona que mejor encajan.",
     landing_disclaimer:"School-O-Mat no es una recomendación escolar — es una herramienta informativa para ayudar a las familias a explorar sus opciones.",
     landing_start:"Empezar",
     welcome_title:"Encuentra la Mejor Escuela para tu Hijo/a",
     welcome_subtitle:"Responde unas preguntas y descubre qué escuelas <span class=\"highlight\">públicas</span> (3–12 años) de <span class=\"highlight\">Barcelona</span> encajan mejor.",
     location_title:"📍 Tu Zona",
-location_subtitle:"¿En qué zona buscas escuela? Esto nos ayuda a encontrar las mejores opciones para ti.",    
+location_subtitle:"¿En qué zona buscas escuela? Esto nos ayuda a encontrar las mejores opciones para ti.",
+    location_hint:"Introduce tu calle y número para ver qué escuelas te dan los 30 puntos máximos de proximidad.",    
 street_placeholder:"Escribe el nombre de tu calle...",
     number_placeholder:"Número (ej. 181)",
     search_btn:"Buscar", start_quiz:"Empezar School-O-Mat →", skip_location:"Saltar ubicación — mostrar todas",
@@ -830,13 +832,14 @@ data_error_retry:"🔄 Reintentar",
   },
   ca: {
     landing_badge:"Barcelona · Escoles Públiques · 3–12 anys",
-    landing_desc:"Totes les escoles públiques de primària de Barcelona han respost. Ara et toca a tu: compara les teves preferències amb el que ofereix cada escola i troba la teva millor opció.",
+    landing_desc:"Respon unes preguntes ràpides sobre el que importa a la teva família i et mostrarem les escoles públiques de Barcelona que millor encaixen.",
     landing_disclaimer:"School-O-Mat no és una recomanació escolar — és una eina informativa per ajudar les famílies a explorar les seves opcions.",
     landing_start:"Començar",
     welcome_title:"Troba la Millor Escola per al teu Fill/a",
     welcome_subtitle:"Respon unes preguntes i descobreix quines escoles <span class=\"highlight\">públiques</span> (3–12 anys) de <span class=\"highlight\">Barcelona</span> encaixen millor.",
     location_title:"📍 La Teva Zona",
-location_subtitle:"A quina zona busques escola? Això ens ajuda a trobar les millors opcions per a tu.",  
+location_subtitle:"A quina zona busques escola? Això ens ajuda a trobar les millors opcions per a tu.",
+    location_hint:"Introdueix el teu carrer i número per veure quines escoles et donen els 30 punts màxims de proximitat.",  
     street_placeholder:"Escriu el nom del teu carrer...",
     number_placeholder:"Número (ex. 181)",
     search_btn:"Cercar", start_quiz:"Començar School-O-Mat →", skip_location:"Saltar ubicació — mostrar totes",
