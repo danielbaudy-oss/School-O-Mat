@@ -352,13 +352,6 @@ body {
   .btn-share:hover { background: var(--primary-dark); transform: scale(1.08); }
   .btn-share:active { transform: scale(0.95); }
   .btn-share svg { width: 22px; height: 22px; fill: white; }
-  .btn-share-tooltip {
-    position: absolute; right: 56px; top: 50%; transform: translateY(-50%);
-    background: var(--gray-800); color: white; font-size: 0.78rem; font-weight: 600;
-    padding: 0.35rem 0.7rem; border-radius: 6px; white-space: nowrap;
-    opacity: 0; pointer-events: none; transition: opacity 0.2s;
-  }
-  .btn-share:hover .btn-share-tooltip { opacity: 1; }
   .share-toast {
     position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
     background: var(--gray-800); color: white; padding: 0.6rem 1.2rem;
@@ -476,7 +469,6 @@ body {
 <!-- Floating share button -->
 <button class="btn-share" onclick="shareResults()" aria-label="Share">
   <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="white" stroke-width="2"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="white" stroke-width="2"/></svg>
-  <span class="btn-share-tooltip" data-i18n="share_btn">Share</span>
 </button>
 <div id="share-toast" class="share-toast"></div>
 
