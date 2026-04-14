@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>School-O-Mat Data Tool</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; color: #1f2937; padding: 1.5rem; line-height: 1.6; }
+  h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem; color: #2563eb; }
+  .subtitle { color: #6b7280; font-size: 0.9rem; margin-bottom: 1.5rem; }
+  .card { background: white; border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 1rem; }
+  .btn { padding: 0.7rem 1.2rem; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin: 0.25rem; }
+  .btn-primary { background: #2563eb; color: white; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-primary:disabled { background: #d1d5db; color: #9ca3af; cursor: not-allowed; }
+  .btn-secondary { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+  .btn-green { background: #10b981; color: white; }
+  .btn-green:hover { background: #059669; }
+  .progress { background: #e5e7eb; border-radius: 100px; height: 8px; margin: 0.75rem 0; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #2563eb, #10b981); border-radius: 100px; transition: width 0.3s; }
+  .status { font-size: 0.85rem; color: #6b7280; margin: 0.5rem 0; }
+  .status.success { color: #065f46; }
+  .status.error { color: #991b1b; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin: 1rem 0; }
+  .stat { background: #f3f4f6; border-radius: 8px; padding: 0.75rem; text-align: center; }
+  .stat-number { font-size: 1.5rem; font-weight: 800; color: #2563eb; }
+  .stat-label { font-size: 0.75rem; color: #6b7280; }
+  .school-list { max-height: 400px; overflow-y: auto; font-size: 0.82rem; border: 1px solid #e5e7eb; border-radius: 8px; }
+  .school-row { display: flex; justify-content: space-between; padding: 0.4rem 0.75rem; border-bottom: 1px solid #f3f4f6; align-items: center; }
+  .school-row:hover { background: #f9fafb; }
+  .school-row .code { color: #6b7280; font-family: monospace; font-size: 0.78rem; }
+  .school-row .name { flex: 1; margin: 0 0.5rem; }
+  .badge { padding: 0.1rem 0.4rem; border-radius: 100px; font-size: 0.7rem; font-weight: 600; }
+  .badge-green { background: #d1fae5; color: #065f46; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-blue { background: #dbeafe; color: #1d4ed8; }
+  textarea { width: 100%; min-height: 200px; font-family: monospace; font-size: 0.8rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; }
+  .output-box { background: #111827; color: #10b981; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.78rem; max-height: 500px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+  .tabs { display: flex; gap: 2px; margin-bottom: 1rem; background: #e5e7eb; padding: 2px; border-radius: 8px; }
+  .tab { padding: 0.5rem 1rem; border: none; background: transparent; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #6b7280; border-radius: 6px; }
+  .tab.active { background: white; color: #2563eb; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .missing-list { columns: 2; font-size: 0.82rem; }
+  .missing-list li { margin-bottom: 0.25rem; }
+</style>
+</head>
+<body>
+
+<h1>🔧 School-O-Mat Data Tool</h1>
+<p class="subtitle">Fetch school data from edubcn.cat API, check completeness, and generate AI-ready rating data.</p>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('tab-check', this)">1. Check Completeness</button>
+  <button class="tab" onclick="showTab('tab-scrape', this)">2. Scrape Details</button>
+  <button class="tab" onclick="showTab('tab-ai', this)">3. AI Rating Output</button>
+</div>
+
+<!-- TAB 1: COMPLETENESS CHECK -->
+<div id="tab-check" class="tab-content active">
+  <div class="card">
+    <h2>📊 Step 1: Check Database Completeness</h2>
+    <p class="status">Fetches all schools from edubcn.cat and compares with your Google Sheet.</p>
+    <br>
+    <button class="btn btn-primary" onclick="runCompletenessCheck()" id="btn-check">🔍 Run Completeness Check</button>
+    <div class="progress" id="check-progress" style="display:none;"><div class="progress-fill" id="check-progress-fill" style="width:0%"></div></div>
+    <div id="check-status" class="status"></div>
+  </div>
+  <div id="check-results" style="display:none;">
+    <div class="stats" id="check-stats"></div>
+    <div class="card" id="missing-card" style="display:none;">
+      <h2>❌ Missing from Your Database</h2>
+      <p class="status">These schools are in the official API but NOT in your Google Sheet:</p>
+      <div id="missing-list"></div>
+    </div>
+    <div class="card" id="extra-card" style="display:none;">
+      <h2>⚠️ In Your DB but Not in API</h2>
+      <p class="status">These codes are in your Sheet but weren't found in the API (might be wrong codes):</p>
+      <div id="extra-list"></div>
+    </div>
+    <div class="card">
+      <h2>✅ Matched Schools</h2>
+      <div id="matched-list" class="school-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: SCRAPE DETAILS -->
+<div id="tab-scrape" class="tab-content">
+  <div class="card">
+    <h2>📥 Step 2: Scrape School Details</h2>
+    <p class="status">Fetches Proyecto Educativo, services, and fees for each school. Takes ~2 minutes for 176 schools.</p>
+    <br>
+    <label><input type="checkbox" id="scrape-all" checked> Scrape all relevant schools from API (recommended)</label><br>
+    <label><input type="checkbox" id="scrape-db-only"> Only scrape schools in my database</label><br><br>
+    <button class="btn btn-primary" onclick="runScrape()" id="btn-scrape">📥 Start Scraping</button>
+    <button class="btn btn-secondary" onclick="stopScrape()">⏹ Stop</button>
+    <div class="progress" id="scrape-progress" style="display:none;"><div class="progress-fill" id="scrape-progress-fill" style="width:0%"></div></div>
+    <div id="scrape-status" class="status"></div>
+  </div>
+  <div id="scrape-results" style="display:none;">
+    <div class="card">
+      <h2>📋 Scraped Data Preview</h2>
+      <div id="scraped-preview" class="school-list"></div>
+    </div>
+    <div class="card">
+      <button class="btn btn-green" onclick="downloadJSON()">💾 Download Full JSON</button>
+      <button class="btn btn-secondary" onclick="downloadCSV()">📊 Download CSV Summary</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: AI RATING OUTPUT -->
+<div id="tab-ai" class="tab-content">
+  <div class="card">
+    <h2>🤖 Step 3: Generate AI Rating Prompts</h2>
+    <p class="status">Generates prompts you can paste into Claude/ChatGPT to get ratings for each school.</p>
+    <br>
+    <p class="status">Schools per batch: <input type="number" id="batch-size" value="5" min="1" max="20" style="width:60px;padding:0.3rem;border:1px solid #d1d5db;border-radius:4px;"></p>
+    <br>
+    <button class="btn btn-primary" onclick="generateAIPrompts()" id="btn-ai">🤖 Generate AI Prompts</button>
+  </div>
+  <div id="ai-results" style="display:none;">
+    <div class="card">
+      <h2>📋 AI Prompt Batches</h2>
+      <p class="status">Copy each batch and paste into Claude or ChatGPT. <span id="batch-count"></span></p>
+      <div id="ai-batches"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var CWC_BASE = 'https://www.edubcn.cat/cwc_rest';
+var SHEET_RAW_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSEh6GlHl6oFvhtY6HTn5pr0Tzfr_M-DjEX2WhRlRR1V0W5Ry4_FzZg2PJ9Nk4s6c1DVvtMy8bpIFw_/pub?gid=0&single=true&output=csv';
+
+var allAPISchools = [];
+var dbSchools = [];
+var relevantAPISchools = [];
+var scrapedData = [];
+var scrapeRunning = false;
+
+function normalizeCode(code) {
+  code = code.toString().trim();
+  while (code.length < 8) code = '0' + code;
+  return code;
+}
+
+function showTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ========== CSV PARSER ==========
+function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.substring(1);
+  var lines = [], current = '', inQ = false;
+  for (var i = 0; i < text.length; i++) {
+    var ch = text[i];
+    if (ch === '"') { inQ = !inQ; current += ch; }
+    else if ((ch === '\n' || ch === '\r') && !inQ) {
+      if (current.length > 0) lines.push(current);
+      current = '';
+      if (ch === '\r' && text[i+1] === '\n') i++;
+    } else current += ch;
+  }
+  if (current.length > 0) lines.push(current);
+  if (lines.length < 2) return [];
+  var headers = splitLine(lines[0]);
+  var result = [];
+  for (var r = 1; r < lines.length; r++) {
+    var vals = splitLine(lines[r]);
+    if (vals.length < 2) continue;
+    var obj = {};
+    for (var c = 0; c < headers.length; c++) {
+      obj[headers[c].trim().toLowerCase()] = vals[c] ? vals[c].trim() : '';
+    }
+    if (obj.code && obj.name) result.push(obj);
+  }
+  return result;
+}
+function splitLine(line) {
+  var r = [], c = '', q = false;
+  for (var i = 0; i < line.length; i++) {
+    var ch = line[i];
+    if (ch === '"') { if (q && line[i+1] === '"') { c += '"'; i++; } else q = !q; }
+    else if (ch === ',' && !q) { r.push(c); c = ''; }
+    else c += ch;
+  }
+  r.push(c);
+  return r;
+}
+
+// ========== COMPLETENESS CHECK ==========
+async function runCompletenessCheck() {
+  var btn = document.getElementById('btn-check');
+  var status = document.getElementById('check-status');
+  var progress = document.getElementById('check-progress');
+  var progressFill = document.getElementById('check-progress-fill');
+
+  btn.disabled = true;
+  progress.style.display = 'block';
+  progressFill.style.width = '10%';
+  status.textContent = '📥 Loading your Google Sheet...';
+  status.className = 'status';
+
+  // Load Sheet
+  try {
+    var resp = await fetch(SHEET_RAW_URL + '&_=' + Date.now());
+    var text = await resp.text();
+    dbSchools = parseCSV(text);
+    status.textContent = '✅ Loaded ' + dbSchools.length + ' schools from Sheet';
+  } catch(e) {
+    status.textContent = '❌ Failed to load Sheet: ' + e.message;
+    status.className = 'status error';
+    btn.disabled = false;
+    return;
+  }
+
+  progressFill.style.width = '30%';
+  status.textContent = '📥 Loading all schools from edubcn.cat API...';
+
+  // Load API
+  try {
+    var resp2 = await fetch(CWC_BASE + '/centres/0/0.1/0/0/0/0/0/0/0/0/0');
+    allAPISchools = await resp2.json();
+    status.textContent = '✅ Loaded ' + allAPISchools.length + ' total centres from API';
+  } catch(e) {
+    status.textContent = '❌ Failed to load API: ' + e.message;
+    status.className = 'status error';
+    btn.disabled = false;
+    return;
+  }
+
+  progressFill.style.width = '60%';
+
+  // Filter relevant schools (Escola + Institut Escola with primary/infantil)
+  relevantAPISchools = allAPISchools.filter(function(s) {
+    var name = s.NOM_COMPLERT || '';
+    return name.startsWith('Escola ') || name.startsWith('Institut Escola ');
+  });
+
+  progressFill.style.width = '80%';
+
+  // Cross-reference
+  var dbCodes = dbSchools.map(function(s) { return normalizeCode(s.code); });
+  var apiCodes = relevantAPISchools.map(function(s) { return s.CODI; });
+
+  var matched = [];
+  var missing = [];
+  var extra = [];
+
+  apiCodes.forEach(function(code) {
+    var apiSchool = relevantAPISchools.find(function(s) { return s.CODI === code; });
+    if (dbCodes.indexOf(code) !== -1) {
+      matched.push({ code: code, name: apiSchool.NOM_COMPLERT, inDB: true });
+    } else {
+      missing.push({ code: code, name: apiSchool.NOM_COMPLERT });
+    }
+  });
+
+  dbCodes.forEach(function(code) {
+    if (apiCodes.indexOf(code) === -1) {
+      var dbSchool = dbSchools.find(function(s) { return normalizeCode(s.code) === code; });
+      extra.push({ code: code, name: dbSchool ? dbSchool.name : 'Unknown' });
+    }
+  });
+
+  progressFill.style.width = '100%';
+
+  // Display results
+  document.getElementById('check-results').style.display = 'block';
+
+  document.getElementById('check-stats').innerHTML =
+    '<div class="stat"><div class="stat-number">' + allAPISchools.length + '</div><div class="stat-label">Total in API</div></div>' +
+    '<div class="stat"><div class="stat-number">' + relevantAPISchools.length + '</div><div class="stat-label">Escola + IE</div></div>' +
+    '<div class="stat"><div class="stat-number">' + dbSchools.length + '</div><div class="stat-label">In Your Sheet</div></div>' +
+    '<div class="stat"><div class="stat-number">' + matched.length + '</div><div class="stat-label">✅ Matched</div></div>' +
+    '<div class="stat"><div class="stat-number">' + missing.length + '</div><div class="stat-label">❌ Missing</div></div>' +
+    '<div class="stat"><div class="stat-number">' + extra.length + '</div><div class="stat-label">⚠️ Extra</div></div>';
+
+  if (missing.length > 0) {
+    document.getElementById('missing-card').style.display = 'block';
+    var html = '<div class="school-list">';
+    missing.forEach(function(s) {
+      html += '<div class="school-row"><span class="code">' + s.code + '</span><span class="name">' + s.name + '</span><span class="badge badge-red">missing</span></div>';
+    });
+    html += '</div>';
+    document.getElementById('missing-list').innerHTML = html;
+  }
+
+  if (extra.length > 0) {
+    document.getElementById('extra-card').style.display = 'block';
+    var html2 = '<div class="school-list">';
+    extra.forEach(function(s) {
+      html2 += '<div class="school-row"><span class="code">' + s.code + '</span><span class="name">' + s.name + '</span><span class="badge badge-blue">extra</span></div>';
+    });
+    html2 += '</div>';
+    document.getElementById('extra-list').innerHTML = html2;
+  }
+
+  var html3 = '';
+  matched.forEach(function(s) {
+    html3 += '<div class="school-row"><span class="code">' + s.code + '</span><span class="name">' + s.name + '</span><span class="badge badge-green">✅</span></div>';
+  });
+  document.getElementById('matched-list').innerHTML = html3;
+
+  status.textContent = '✅ Check complete! ' + matched.length + ' matched, ' + missing.length + ' missing, ' + extra.length + ' extra.';
+  status.className = 'status success';
+  btn.disabled = false;
+}
+
+// ========== SCRAPE DETAILS ==========
+async function runScrape() {
+  if (relevantAPISchools.length === 0) {
+    document.getElementById('scrape-status').textContent = '⚠️ Run completeness check first!';
+    return;
+  }
+
+  var dbOnly = document.getElementById('scrape-db-only').checked;
+  var schoolsToScrape;
+
+  if (dbOnly) {
+    var dbCodes = dbSchools.map(function(s) { return normalizeCode(s.code); });
+    schoolsToScrape = relevantAPISchools.filter(function(s) { return dbCodes.indexOf(s.CODI) !== -1; });
+  } else {
+    schoolsToScrape = relevantAPISchools;
+  }
+
+  scrapeRunning = true;
+  scrapedData = [];
+  var btn = document.getElementById('btn-scrape');
+  var status = document.getElementById('scrape-status');
+  var progress = document.getElementById('scrape-progress');
+  var progressFill = document.getElementById('scrape-progress-fill');
+
+  btn.disabled = true;
+  progress.style.display = 'block';
+
+  for (var i = 0; i < schoolsToScrape.length; i++) {
+    if (!scrapeRunning) break;
+
+    var school = schoolsToScrape[i];
+    var pct = Math.round(((i+1) / schoolsToScrape.length) * 100);
+    progressFill.style.width = pct + '%';
+    status.textContent = '📥 (' + (i+1) + '/' + schoolsToScrape.length + ') ' + school.NOM_COMPLERT + '...';
+
+    var detail = { code: school.CODI, name: school.NOM_COMPLERT, address: '', district: '', barri: '' };
+
+    // Basic info
+    try {
+      var r1 = await fetch(CWC_BASE + '/centre/' + school.CODI);
+      var d1 = await r1.json();
+      if (d1 && d1[0]) {
+        detail.web = d1[0].WEB || '';
+        detail.accessible = d1[0].ES_ACCESSIBLE || 0;
+        detail.usee = d1[0].USEE || 0;
+        detail.horari = d1[0].HORARI || '';
+        if (d1[0].ADRECES && d1[0].ADRECES[0]) {
+          detail.address = (d1[0].ADRECES[0].TIPUS_VIA || '') + ' ' + d1[0].ADRECES[0].ADRECA + ' ' + d1[0].ADRECES[0].NUMERO;
+          detail.district = d1[0].ADRECES[0].DISTRICTE || '';
+          detail.barri = d1[0].ADRECES[0].BARRI || '';
+          detail.cp = d1[0].ADRECES[0].CP || '';
+          detail.lat = d1[0].ADRECES[0].LATITUD || '';
+          detail.lng = d1[0].ADRECES[0].LONGITUD || '';
+        }
+      }
+    } catch(e) { detail.error_basic = e.message; }
+
+    // Proyecto Educativo
+    try {
+      var r2 = await fetch(CWC_BASE + '/ca/projecte_educatiu/' + school.CODI);
+      var d2 = await r2.json();
+      if (d2 && d2[0]) {
+        detail.trets_identitat = stripHTML(d2[0].TRETS_IDENTITAT || '');
+        detail.pilars_pedagogics = stripHTML(d2[0].PILARS_PEDAGOGICS || '');
+        detail.objectius = stripHTML(d2[0].OBJECTIUS_EDUCATIUS_PRIORITARIS || '');
+        detail.criteris = stripHTML(d2[0].CRITERIS_ORGANITZCIO_PEDAGOGICA || '');
+        detail.projectes = stripHTML(d2[0].PROJECTES_I_ACTIVITATS_DESTACADES || '');
+        detail.ambits = stripHTML(d2[0].AMBITS_PARTICIPACIO || '');
+      }
+    } catch(e) { detail.error_project = e.message; }
+
+    // Services
+    try {
+      var r3 = await fetch(CWC_BASE + '/serveis_centre/' + school.CODI);
+      var d3 = await r3.json();
+      detail.services = d3.map(function(s) { return s.NOM || s.SERVEI || JSON.stringify(s); }).join(', ');
+    } catch(e) { detail.error_services = e.message; }
+
+    // Fees
+    try {
+      var r4 = await fetch(CWC_BASE + '/quotes/' + school.CODI);
+      var d4 = await r4.json();
+      if (d4 && d4[0]) {
+        detail.fee_p3 = d4[0].P3 || '';
+        detail.fee_ep1 = d4[0].EP1 || '';
+        detail.fee_menjador = d4[0].MENJADOR || '';
+      }
+    } catch(e) { detail.error_fees = e.message; }
+
+    scrapedData.push(detail);
+
+    // Small delay to not hammer the API
+    await new Promise(function(resolve) { setTimeout(resolve, 150); });
+  }
+
+  // Show results
+  document.getElementById('scrape-results').style.display = 'block';
+  var preview = '';
+  scrapedData.slice(0, 20).forEach(function(s) {
+    var hasProject = s.trets_identitat || s.objectius ? '📝' : '—';
+    var hasServices = s.services ? '✅' : '—';
+    preview += '<div class="school-row"><span class="code">' + s.code + '</span><span class="name">' + s.name + '</span><span>' + hasProject + ' ' + hasServices + '</span></div>';
+  });
+  if (scrapedData.length > 20) preview += '<div class="school-row" style="color:#6b7280;justify-content:center;">...and ' + (scrapedData.length - 20) + ' more</div>';
+  document.getElementById('scraped-preview').innerHTML = preview;
+
+  status.textContent = '✅ Scraped ' + scrapedData.length + ' schools!';
+  status.className = 'status success';
+  btn.disabled = false;
+  scrapeRunning = false;
+}
+
+function stopScrape() { scrapeRunning = false; }
+
+function stripHTML(html) {
+  if (!html) return '';
+  var tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent.replace(/\s+/g, ' ').trim();
+}
+
+function downloadJSON() {
+  var blob = new Blob([JSON.stringify(scrapedData, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'school-data-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+}
+
+function downloadCSV() {
+  var headers = ['code','name','address','district','barri','cp','lat','lng','web','accessible','usee','services','trets_identitat','objectius','criteris','projectes','ambits','fee_p3','fee_ep1','fee_menjador'];
+  var csv = headers.join(',') + '\n';
+  scrapedData.forEach(function(s) {
+    csv += headers.map(function(h) {
+      var val = (s[h] || '').toString().replace(/"/g, '""');
+      return '"' + val + '"';
+    }).join(',') + '\n';
+  });
+  var blob = new Blob([csv], { type: 'text/csv' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'school-data-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// ========== AI PROMPTS ==========
+function generateAIPrompts() {
+  if (scrapedData.length === 0) {
+    document.getElementById('ai-results').innerHTML = '<div class="card"><p class="status error">⚠️ Run the scraper first (Step 2)!</p></div>';
+    document.getElementById('ai-results').style.display = 'block';
+    return;
+  }
+
+  var batchSize = parseInt(document.getElementById('batch-size').value) || 5;
+  var batches = [];
+
+  for (var i = 0; i < scrapedData.length; i += batchSize) {
+    var batch = scrapedData.slice(i, i + batchSize);
+    var prompt = 'You are rating Barcelona public primary schools on 4 dimensions (1.0-5.0 scale, 0.5 increments):\n\n';
+    prompt += '**PEDAGOGY** (1=very traditional textbook-based, 3=balanced, 5=very progressive project-based child-led)\n';
+    prompt += '**FACILITIES** (1=old/basic building, 3=decent, 5=modern/renovated/excellent)\n';
+    prompt += '**OUTDOOR** (1=minimal patio, 3=decent outdoor space, 5=large green spaces/gardens)\n';
+    prompt += '**ARTS** (1=no arts focus, 3=some arts, 5=strong arts/music/culture integration)\n\n';
+    prompt += 'Rate based on the official data below. If info is insufficient, use 3.0 (neutral). Be precise — use 0.5 increments.\n\n';
+    prompt += 'Return ONLY a JSON array like: [{"code":"08002563","pedagogy":3.5,"facilities":4,"outdoor":3,"arts":2},...]\n\n';
+    prompt += '---\n\n';
+
+    batch.forEach(function(s) {
+      prompt += '### ' + s.name + ' (' + s.code + ')\n';
+      prompt += 'District: ' + (s.district || '?') + ' | Barri: ' + (s.barri || '?') + '\n';
+      prompt += 'Accessible: ' + (s.accessible ? 'Yes' : 'No') + ' | SIEI: ' + (s.usee ? 'Yes' : 'No') + '\n';
+      prompt += 'Services: ' + (s.services || 'none listed') + '\n';
+      if (s.trets_identitat) prompt += 'Identity traits: ' + s.trets_identitat.substring(0, 500) + '\n';
+      if (s.objectius) prompt += 'Educational objectives: ' + s.objectius.substring(0, 500) + '\n';
+      if (s.criteris) prompt += 'Pedagogical criteria: ' + s.criteris.substring(0, 500) + '\n';
+      if (s.projectes) prompt += 'Projects: ' + s.projectes.substring(0, 300) + '\n';
+      if (s.ambits) prompt += 'Participation: ' + s.ambits.substring(0, 300) + '\n';
+      prompt += '\n';
+    });
+
+    batches.push(prompt);
+  }
+
+  document.getElementById('ai-results').style.display = 'block';
+  document.getElementById('batch-count').textContent = batches.length + ' batches of ' + batchSize + ' schools each.';
+
+  var html = '';
+  batches.forEach(function(prompt, idx) {
+    html += '<div class="card" style="margin-top:0.75rem;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">';
+    html += '<strong>Batch ' + (idx+1) + '/' + batches.length + '</strong>';
+    html += '<button class="btn btn-secondary" onclick="copyBatch(' + idx + ')" style="font-size:0.8rem;padding:0.4rem 0.8rem;">📋 Copy</button>';
+    html += '</div>';
+    html += '<textarea id="batch-' + idx + '" readonly onclick="this.select()">' + escapeHtml(prompt) + '</textarea>';
+    html += '</div>';
+  });
+  document.getElementById('ai-batches').innerHTML = html;
+
+  // Store globally for copy
+  window._batches = batches;
+}
+
+function copyBatch(idx) {
+  navigator.clipboard.writeText(window._batches[idx]).then(function() {
+    event.target.textContent = '✅ Copied!';
+    setTimeout(function() { event.target.textContent = '📋 Copy'; }, 2000);
+  });
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
