@@ -1423,25 +1423,54 @@ function renderResults() {
 
   scoredResults.forEach(function(r, i) {
     if (!r.school.lat || !r.school.lng) return;
-        var color, sz;
-    // Top 3 always get their rank color
-    if (i === 0) { color = '#f59e0b'; sz = 11; }
-    else if (i === 1) { color = '#2563eb'; sz = 10; }
-    else if (i === 2) { color = '#b63bdb'; sz = 9; }
-    else if (r.inCatchment) { color = '#10b981'; sz = 7; }
-    else { color = '#d1d5db'; sz = 5; }
+    // Skip top 3 and catchment — we'll add them on top after
+    if (i < 3 || r.inCatchment) { bounds.extend([r.school.lat, r.school.lng]); return; }
 
     L.circleMarker([r.school.lat, r.school.lng], {
-      radius: sz, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.9
+      radius: 5, fillColor: '#d1d5db', color: '#fff', weight: 2, fillOpacity: 0.9
     }).addTo(resultsMap).bindPopup(
       '<div style="font-family:-apple-system,sans-serif;font-size:13px;line-height:1.4;">' +
       '<b style="color:#1f2937;">#'+(i+1)+' '+escapeAttr(r.school.name)+'</b><br>' +
       '<span style="color:#6b7280;">'+r.pct+'% '+t('match')+(r.distKm?' · '+Math.round(r.distKm*1000)+'m':'')+'</span><br>' +
-      '<span style="color:'+(r.inCatchment?'#065f46':'#6b7280')+';font-size:11px;">'+(r.inCatchment?t('pts_30_short'):t('pts_10_short'))+'</span>' +
+      '<span style="color:#6b7280;font-size:11px;">'+t('pts_10_short')+'</span>' +
       '</div>'
     );
     bounds.extend([r.school.lat, r.school.lng]);
   });
+
+  // Add catchment schools on top of grey dots
+  scoredResults.forEach(function(r, i) {
+    if (!r.school.lat || !r.school.lng) return;
+    if (i < 3 || !r.inCatchment) return;
+
+    L.circleMarker([r.school.lat, r.school.lng], {
+      radius: 7, fillColor: '#10b981', color: '#fff', weight: 2, fillOpacity: 0.9
+    }).addTo(resultsMap).bindPopup(
+      '<div style="font-family:-apple-system,sans-serif;font-size:13px;line-height:1.4;">' +
+      '<b style="color:#1f2937;">#'+(i+1)+' '+escapeAttr(r.school.name)+'</b><br>' +
+      '<span style="color:#6b7280;">'+r.pct+'% '+t('match')+(r.distKm?' · '+Math.round(r.distKm*1000)+'m':'')+'</span><br>' +
+      '<span style="color:#065f46;font-size:11px;">'+t('pts_30_short')+'</span>' +
+      '</div>'
+    );
+  });
+
+  // Add top 3 last so they're always on top
+  var topColors = ['#f59e0b', '#2563eb', '#b63bdb'];
+  var topSizes = [11, 10, 9];
+  for (var ti = 2; ti >= 0; ti--) {
+    var r = scoredResults[ti];
+    if (!r || !r.school.lat || !r.school.lng) continue;
+
+    L.circleMarker([r.school.lat, r.school.lng], {
+      radius: topSizes[ti], fillColor: topColors[ti], color: '#fff', weight: 2, fillOpacity: 0.9
+    }).addTo(resultsMap).bindPopup(
+      '<div style="font-family:-apple-system,sans-serif;font-size:13px;line-height:1.4;">' +
+      '<b style="color:#1f2937;">#'+(ti+1)+' '+escapeAttr(r.school.name)+'</b><br>' +
+      '<span style="color:#6b7280;">'+r.pct+'% '+t('match')+(r.distKm?' · '+Math.round(r.distKm*1000)+'m':'')+'</span><br>' +
+      '<span style="color:'+(r.inCatchment?'#065f46':'#6b7280')+';font-size:11px;">'+(r.inCatchment?t('pts_30_short'):t('pts_10_short'))+'</span>' +
+      '</div>'
+    );
+  }
 
   if (userLat && userLng) {
     var nearBounds = L.latLngBounds([[userLat, userLng]]);
