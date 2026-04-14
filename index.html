@@ -178,7 +178,7 @@ body {
     height: 6px; margin-bottom: 1.25rem; overflow: hidden;
   }
   .progress-bar-fill {
-    height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent));
+    height: 100%; background: linear-gradient(90deg, var(--primary), #60a5fa);
     border-radius: 100px; transition: width 0.4s ease;
   }
   .question-card {
@@ -402,7 +402,7 @@ body {
 <div id="screen-results" class="screen">
   <div class="container">
     <div class="results-header">
-      <h1 data-i18n="results_title">🎉 Your School Matches</h1>
+      <h1 data-i18n="results_title">Your School Matches</h1>
       <p data-i18n="results_subtitle">Based on your preferences — official proximity points from edubcn.cat.</p>
     </div>
     <div id="answers-summary"></div>
@@ -662,7 +662,7 @@ location_subtitle:"Where are you looking for a school? This helps us find the cl
     geocode_error:"❌ Not found. Check the number and try again.",
     geocode_api_error:"❌ Could not connect to edubcn.cat. Try again later.",
     prev_btn:"← Back", next_btn:"Next →",
-    results_title:"🎉 Your School Matches",
+    results_title:"Your School Matches",
     results_subtitle:"Based on your preferences — official proximity points from edubcn.cat.",
     restart_btn:"🔄 Start Over", match:"match", walk:"walk",
     share_btn:"Share with other parents",
@@ -720,7 +720,7 @@ street_placeholder:"Escribe el nombre de tu calle...",
     geocode_error:"❌ No encontrado. Revisa el número e inténtalo de nuevo.",
     geocode_api_error:"❌ No se pudo conectar con edubcn.cat. Inténtalo más tarde.",
     prev_btn:"← Atrás", next_btn:"Siguiente →",
-    results_title:"🎉 Tus Escuelas Recomendadas",
+    results_title:"Tus Escuelas Recomendadas",
     results_subtitle:"Según tus preferencias — puntos de proximidad oficiales de edubcn.cat.",
     restart_btn:"🔄 Empezar de Nuevo", match:"compatibilidad", walk:"a pie",
     share_btn:"Compartir con otros padres",
@@ -773,7 +773,7 @@ location_subtitle:"A quina zona busques escola? Això ens ajuda a trobar les mil
     geocode_error:"❌ No trobat. Revisa el número i torna-ho a provar.",
     geocode_api_error:"❌ No s'ha pogut connectar amb edubcn.cat. Prova-ho més tard.",
     prev_btn:"← Enrere", next_btn:"Següent →",
-    results_title:"🎉 Les Teves Escoles Recomanades",
+    results_title:"Les Teves Escoles Recomanades",
     results_subtitle:"Segons les teves preferències — punts de proximitat oficials d'edubcn.cat.",
     restart_btn:"🔄 Tornar a Començar", match:"compatibilitat", walk:"a peu",
     share_btn:"Compartir amb altres pares",
@@ -1112,8 +1112,8 @@ function goToQuiz() {
 function renderQuestion() {
   var q = questions[currentQuestion];
   var totalQ = userLat ? questions.length : questions.length - 1;
-  var currentQ = userLat ? currentQuestion : currentQuestion - 1;
-  document.getElementById('progress-fill').style.width = ((currentQ)/totalQ*100)+'%';  document.getElementById('prev-btn').style.visibility = currentQuestion===0 ? 'hidden' : 'visible';
+  var currentQ = userLat ? currentQuestion + 1 : currentQuestion;
+  document.getElementById('progress-fill').style.width = (currentQ/totalQ*100)+'%';  document.getElementById('prev-btn').style.visibility = currentQuestion===0 ? 'hidden' : 'visible';
   document.getElementById('next-btn').textContent = t('next_btn');
   var displayNum = userLat ? currentQuestion + 1 : currentQuestion;
   var displayTotal = userLat ? questions.length : questions.length - 1;
